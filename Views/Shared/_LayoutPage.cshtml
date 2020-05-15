@@ -1,0 +1,118 @@
+﻿<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>@ViewBag.Title</title>
+    <link href="~/bootstrap/css/bootstrap-responsive.min.css" rel="stylesheet" />
+    <link href="~/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/css/theme.css" rel="stylesheet" />
+    <link href="~/images/icons/css/font-awesome.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner">
+            <div class="container">
+                <a class="btn btn-navbar" data-toggle="collapse" data-target=".navbar-inverse-collapse">
+                    <i class="icon-reorder shaded"></i>
+                </a><a class="brand" href="index.html">PayPoint- <i style="font-size:14px">Point of Sale Software</i></a>
+                <div class="nav-collapse collapse navbar-inverse-collapse">
+                    <ul class="nav pull-right">                   
+                        <li class="nav-user dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                                <span><b>Your FullName</b></span>
+                                <b class="caret"></b>
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a href="#">Change Password</a></li>
+                                <li class="divider"></li>
+                                <li><a href="#">Logout</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                <!-- /.nav-collapse -->
+            </div>
+        </div>
+        <!-- /navbar-inner -->
+    </div>
+
+    <div class="wrapper">
+        <div class="container">
+            <div class="row">
+                <div class="span3">
+                    <div class="sidebar">
+                        <ul class="widget widget-menu unstyled">
+                            <li class="active">
+                                <a href="index.html">
+                                    <i class="menu-icon icon-dashboard"></i>Dashboard
+                                </a>
+                            </li>
+                            <li>
+                                <a class="collapsed" data-toggle="collapse" href="#togglePages">
+                                    <i class="menu-icon icon-folder-close">
+                                    </i><i class="icon-chevron-down pull-right"></i><i class="icon-chevron-up pull-right">
+                                    </i>BackOffice
+                                </a>
+                                <ul id="togglePages" class="collapse unstyled">
+                                    <li><a href="#"><i class="icon-inbox"></i>Create Inventory </a></li>
+                                    <li><a href="#"><i class="icon-inbox"></i>Update Inventory </a></li>
+                                    <li><a href="#"><i class="icon-inbox"></i>System Setup </a></li>
+                                </ul>
+                            </li>
+
+                            <li>
+                                <a class="collapsed" data-toggle="collapse" href="#togglePagesSales">
+                                    <i class="menu-icon icon-shopping-cart">
+                                    </i><i class="icon-shopping-cart pull-right"></i><i class="icon-chevron-up pull-right">
+                                    </i>Sales
+                                </a>
+                                <ul id="togglePagesSales" class="collapse unstyled">
+                                    <li><a href="#"><i class="icon-shopping-cart"></i>Sales Retail </a></li>
+                                    <li><a href="#"><i class="icon-shopping-cart"></i>Sales Wholesale </a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a class="collapsed" data-toggle="collapse" href="#togglePages2">
+                                    <i class="menu-icon icon-cog">
+                                    </i><i class="icon-chevron-down pull-right"></i><i class="icon-chevron-up pull-right">
+                                    </i>Reporting
+                                </a>
+                                <ul id="togglePages2" class="collapse unstyled">
+                                    <li><a href="#"><i class="icon-inbox"></i>Daily Sales Report </a></li>
+                                    <li><a href="#"><i class="icon-inbox"></i>Historical Reoprt </a></li>
+                                </ul>
+                            </li>                     
+                        </ul>
+                        <!--/.widget-nav-->                       
+                    </div>
+                    <!--/.sidebar-->
+                </div>
+                <!--/.span3-->
+                <div class="span9">
+                    <div class="content">
+                        <div>
+                            @RenderBody()
+                        </div>
+                        <!--/.module-->
+                    </div>
+                    <!--/.content-->
+                </div>
+                <!--/.span9-->
+            </div>
+        </div>
+        <!--/.container-->
+    </div>
+    <div class="footer">
+        <div class="container">
+            <b class="copyright">&copy; @DateTime.Now.Year <a href="https://www.travissystemsgh.com">Travis Systems Limited</a> </b>All rights reserved.
+        </div>
+    </div>
+
+    <script src="~/scripts/jquery-1.9.1.min.js"></script>
+    <script src="~/scripts/jquery-ui-1.10.1.custom.min.js"></script>
+    <script src="~/bootstrap/js/bootstrap.min.js"></script>
+    <script src="~/scripts/datatables/jquery.dataTables.js"></script>
+    <script src="~/scripts/common.js"></script>
+</body>
+</html>
