@@ -9,9 +9,26 @@ namespace PointOfSale.Data.repository
 {
 	public class CompanyRepository : ICompany
 	{
+		private readonly POSContext _context = new POSContext();
 		public void AddCompany(Company company)
 		{
-			throw new NotImplementedException();
+			if (company == null)
+			{
+				throw new ArgumentNullException(nameof(company));
+			}
+
+			var Savecompany = new Company()
+			{
+				Name = company.Name,
+				CreationDate=DateTime.Now,
+				CreatedBy=company.CreatedBy,
+				ContactNo= company.ContactNo,
+				Address= company.Address,
+				EmailAddress= company.EmailAddress
+			};
+			_context.Companies.Add(Savecompany);
+			_context.SaveChanges();
+			
 		}
 
 		public void DeleteCompany(int id)

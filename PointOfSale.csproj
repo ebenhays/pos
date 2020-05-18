@@ -103,6 +103,8 @@
     <Content Include="css\theme.css" />
     <Content Include="Global.asax" />
     <Content Include="images\bg.png" />
+    <Content Include="images\delete_image.png" />
+    <Content Include="images\edit_pencil.png" />
     <Content Include="images\icons\css\font-awesome.css" />
     <Content Include="images\img.jpg" />
     <Content Include="images\jquery-ui\picker.png" />
@@ -113,14 +115,29 @@
     <Content Include="scripts\flot\jquery.flot.pie.js" />
     <Content Include="scripts\flot\jquery.flot.resize.js" />
     <Content Include="scripts\jquery-1.9.1.min.js" />
+    <None Include="scripts\jquery-3.4.1.intellisense.js" />
+    <Content Include="scripts\jquery-3.4.1.js" />
+    <Content Include="scripts\jquery-3.4.1.min.js" />
+    <Content Include="scripts\jquery-3.4.1.slim.js" />
+    <Content Include="scripts\jquery-3.4.1.slim.min.js" />
     <Content Include="scripts\jquery-ui-1.10.1.custom.min.js" />
+    <None Include="scripts\jquery.validate-vsdoc.js" />
+    <Content Include="scripts\jquery.validate.js" />
+    <Content Include="scripts\jquery.validate.min.js" />
+    <Content Include="scripts\jquery.validate.unobtrusive.js" />
+    <Content Include="scripts\jquery.validate.unobtrusive.min.js" />
+    <Content Include="SweetAlert\sweetalert.css" />
+    <Content Include="SweetAlert\sweetalert.js" />
+    <Content Include="SweetAlert\sweetalert.min.js" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="Controllers\CategoryController.cs" />
+    <Compile Include="Controllers\CompanyController.cs" />
     <Compile Include="Controllers\InventoryController.cs" />
     <Compile Include="Controllers\POSController.cs" />
+    <Compile Include="Controllers\SetupController.cs" />
     <Compile Include="Data\interfaces\ICategory.cs" />
     <Compile Include="Data\interfaces\ICompany.cs" />
     <Compile Include="Data\interfaces\IInventory.cs" />
@@ -144,10 +161,19 @@
     <Compile Include="Migrations\202005142313525_InitialMigrations.designer.cs">
       <DependentUpon>202005142313525_InitialMigrations.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\202005151424335_InitialMigrations1.cs" />
+    <Compile Include="Migrations\202005151424335_InitialMigrations1.designer.cs">
+      <DependentUpon>202005151424335_InitialMigrations1.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\202005152151025_ChangedLastUpdated.cs" />
+    <Compile Include="Migrations\202005152151025_ChangedLastUpdated.designer.cs">
+      <DependentUpon>202005152151025_ChangedLastUpdated.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\InventoryModel.cs" />
     <Compile Include="Data\interfaces\ISuppliers.cs" />
     <Compile Include="Models\POSContext.cs" />
+    <Compile Include="Models\ViewModels\SetupViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -160,6 +186,12 @@
     <Content Include="Views\Shared\_LayoutPage.cshtml" />
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\POS\Index.cshtml" />
+    <Content Include="Views\Category\Index.cshtml" />
+    <Content Include="scripts\jquery-3.4.1.slim.min.map" />
+    <Content Include="scripts\jquery-3.4.1.min.map" />
+    <Content Include="Views\Category\Index2.cshtml" />
+    <Content Include="Views\Setup\Index.cshtml" />
+    <Content Include="Views\Category\GetCategoryById.cshtml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -169,12 +201,18 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Views\Category\" />
+    <Folder Include="Views\Company\" />
     <Folder Include="Views\Inventory\" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Migrations\202005142313525_InitialMigrations.resx">
       <DependentUpon>202005142313525_InitialMigrations.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202005151424335_InitialMigrations1.resx">
+      <DependentUpon>202005151424335_InitialMigrations1.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\202005152151025_ChangedLastUpdated.resx">
+      <DependentUpon>202005152151025_ChangedLastUpdated.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>

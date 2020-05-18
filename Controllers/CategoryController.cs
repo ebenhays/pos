@@ -1,5 +1,6 @@
 ﻿using PointOfSale.Data.repository;
 using PointOfSale.Models;
+using PointOfSale.Models.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,84 +11,80 @@ namespace PointOfSale.Controllers
 {
     public class CategoryController : Controller
     {
-        private readonly CategoryRepository _repository;
+        private readonly CategoryRepository _repository = new CategoryRepository();
 
-        public CategoryController(CategoryRepository repository) //constructor injection
-        {
-            _repository = repository;
-        }
         // GET: Category
+        [HttpGet]
         public ActionResult Index()
         {
-            return View();
+            return View("/Views/Setup/Index.cshtml");
         }
 
         [HttpPost]
-        [ActionName("Add")]
+        [ActionName("Index")]
         [ValidateAntiForgeryToken]
-        public ActionResult AddCategory(Category category)
+        public ActionResult AddCategory([Bind(Include = "Name,CreationDate,CreatedBy,LastUpdatedBy,LastUpdateDate")] Category category)
         {
-            if (ModelState.IsValid)
-            {
-                _repository.AddCategory(category);
-                return RedirectToAction("Success");
+            try
+            { 
+                if (ModelState.IsValid)
+                {
+                 _repository.AddCategory(category);
+                  TempData["Message"] = "Category Saved Successfully";
+                    return RedirectToAction("Index","Setup");
+                 }
+                 return View("/Views/Setup/Index.cshtml");
             }
-            return View();
+            catch (Exception)
+            {
+
+                throw;
+            }
+           
         }
 
         [HttpPost]
-        [ActionName("Update")]
+        [ActionName("UpdateCategory")]
         [ValidateAntiForgeryToken]
         public ActionResult UpdateCategory(Category category, int id)
         {
             if (ModelState.IsValid)
             {
                 _repository.UpdateCategory(category,id);
-                return RedirectToAction("Success");
+                TempData["Message"] = "Category Updated Successfully";
+                return RedirectToAction("Index","Setup");
             }
-            return View();
+            return View("/Views/Setup/Index.cshtml");
         }
 
         [HttpPost]
         [ActionName("Delete")]
-        [ValidateAntiForgeryToken]
+        //[ValidateAntiForgeryToken]
         public ActionResult DeleteCategory(int id)
         {
             if (ModelState.IsValid)
             {
                 _repository.DeleteCategory(id);
-                return RedirectToAction("Success");
+                TempData["Message"] = "Category Deleted Successfully";
+                return RedirectToAction("Index","Setup");
             }
-            return View();
+            return View("/Views/Setup/Index.cshtml");
         }
 
         [HttpGet]
-        [ActionName("Update")]
-        public ActionResult GetUpdateCategory()
+        [ActionName("EditCategory")]
+        public ActionResult GetCategoryById(int id)
         {
-            return View();
+            var getItem = _repository.GetCategory(id);
+            if (getItem == null)
+            {
+                return RedirectToAction("Index", "Setup");
+            }
+            return View("GetCategoryById",getItem);
         }
 
-        [HttpGet]
-        [ActionName("Categories")]
-        public ActionResult GetCategories()
-        {
-            var categories = _repository.GetCategories();
-            return View(categories);
-        }
 
-        [HttpGet]
-        [ActionName("Categories")]
-        public ActionResult GetCategories(int id)
-        {
-            var category = _repository.GetCategory(id);
-            return View(category);
-        }
+        
 
-        [HttpGet]
-        public ActionResult Success()
-        {
-            return View();
-        }
     }
 }

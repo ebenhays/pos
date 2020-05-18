@@ -1,0 +1,67 @@
+﻿@model PointOfSale.Models.Category
+
+@{
+    ViewBag.Title = "Edit Category";
+}
+    <div class="module">
+        <div class="module-head">
+            <h3>Update Category</h3>
+        </div>
+        <div class="module-body">
+            @using (Html.BeginForm("UpdateCategory", "Category",new {id=Model.Id }, FormMethod.Post, htmlAttributes: new { id = "UpdateCategory" }))
+            {
+                @Html.AntiForgeryToken()
+
+                <div class="form-horizontal row-fluid">
+                    <div class="control-group">
+                        @Html.LabelFor(model => model.Name, htmlAttributes: new { @class = "control-label" })
+                        <div class="controls">
+                            @Html.TextBoxFor(model => model.Name, htmlAttributes: new { @class = "span8", placeholder = "Enter CategoryName", id = "categoryname" })
+                            @Html.ValidationMessageFor(model => model.Name, "", new { @class = "alert-danger" })
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <div class="controls">
+                            <button type="submit" class="btn btn-primary" onclick="return Validate(this, event); ">Update Category</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+        <script>
+            function ValidateInput() {
+                if ($("#categoryname").val() === "") {
+                    swal('You have an error', "Category Name  is Required", "error");
+                    return false;
+                } else {
+                    return true;
+                }
+            }
+
+            function Validate(ctl, event) {
+                event.preventDefault();
+                swal({
+                    title: "Do you want to update this record?",
+                    text: "Please check Information before Submiting!",
+                    type: "info",
+                    showCancelButton: true,
+                    confirmButtonColor: "#DD6B55",
+                    confirmButtonText: "Yes! Update",
+                    cancelButtonText: "Cancel",
+                    closeOnConfirm: false,
+                    closeOnCancel: false,
+                },
+                    function (isConfirm) {
+                        if (isConfirm) {
+                            if (ValidateInput() === true) {
+                                $("#UpdateCategory").submit();
+                            }
+                        } else {
+                            swal("Cancelled", "You have Cancelled Form Submission!", "error");
+                        }
+                    });
+            }
+
+        </script>
+    </div>
+

@@ -13,125 +13,104 @@ namespace PointOfSale.Models
 	{
 		[Key]
 		public int Id { get; set; }
-		[Required]
+		[Required(ErrorMessage ="Please Enter CategoryName")]
 		[StringLength(100)]
 		public string Name { get; set; }
-		[Required]
-		[StringLength(100)]
-		[Index(IsUnique = true)]
-		public string Code { get; set; }
-		[Required]
-		public DateTime CreationDate { get; set; }
-		[Required]
-		[StringLength(50)]
+		public DateTime? CreationDate { get; set; }
 		public string CreatedBy { get; set; }
-		public DateTime? LastUpdatedBy { get; set; }
-		public string LastUpdateDate { get; set; }
+		public string LastUpdatedBy { get; set; }
+		public DateTime? LastUpdateDate { get; set; }
 	}
 	public class Company
 	{
 		public int Id { get; set; }
-		[Required]
+		[Required(ErrorMessage = "Please Enter Company Name")]
 		[StringLength(100)]
 		public string Name { get; set; }
 		[StringLength(100)]
 		public string Address { get; set; }
-		[Required]
+		[Required(ErrorMessage = "Please Enter Contact No")]
 		public string ContactNo { get; set; }
 		[StringLength(50)]
 		public string EmailAddress { get; set; }
-		public DateTime CreationDate { get; set; }
-		[Required]
-		[StringLength(50)]
+		public DateTime? CreationDate { get; set; }
 		public string CreatedBy { get; set; }
-		public DateTime? LastUpdatedBy { get; set; }
-		public string LastUpdateDate { get; set; }
+		public string LastUpdatedBy { get; set; }
+		public DateTime? LastUpdateDate { get; set; }
+		
 	}
 	public class ProductStatus
 	{
 		public int Id { get; set; }
-		[Required]
+		[Required(ErrorMessage ="Please Enter Product Status")]
 		[StringLength(50)]
 		public string Status { get; set; }
-		[Required]
-		public DateTime CreationDate { get; set; }
-		[Required]
+		public DateTime? CreationDate { get; set; }
 		[StringLength(50)]
 		public string CreatedBy { get; set; }
-		public DateTime? LastUpdatedBy { get; set; }
-		public string LastUpdateDate { get; set; }
+		public string LastUpdatedBy { get; set; }
+		public DateTime? LastUpdateDate { get; set; }
 	}
 	public class UserRole
 	{
 		public int Id { get; set; }
-		[Required]
+		[Required(ErrorMessage ="Please Enter the Role Name")]
 		[StringLength(50)]
 		public string Name { get; set; }
-		[Required]
-		public DateTime CreationDate { get; set; }
-		[Required]
+		public DateTime? CreationDate { get; set; }
 		[StringLength(50)]
 		public string CreatedBy { get; set; }
-		public DateTime? LastUpdatedBy { get; set; }
-		public string LastUpdateDate { get; set; }
+		public string LastUpdatedBy { get; set; }
+		public DateTime? LastUpdateDate { get; set; }
 	}
 	public class UserStatus
 	{
 		public int Id { get; set; }
 
-		[Required]
+		[Required(ErrorMessage ="Please Enter the Status Name")]
 		[StringLength(50)]
 		public string Status { get; set; }
-		[Required]
-		public DateTime CreationDate { get; set; }
-		[Required]
+		public DateTime? CreationDate { get; set; }
 		[StringLength(50)]
 		public string CreatedBy { get; set; }
-		public DateTime? LastUpdatedBy { get; set; }
-		public string LastUpdateDate { get; set; }
+		public string LastUpdatedBy { get; set; }
+		public DateTime? LastUpdateDate { get; set; }
 	}
 	public class Suppliers
 	{
 		public int Id { get; set; }
-		[Required]
+		[Required(ErrorMessage ="Please Enter Supplier Name")]
 		[StringLength(100)]
 		public string Name { get; set; }
-		[Required]
-		public string Code { get; set; }
 		public string Address { get; set; }
-		[Required]
+		[Required(ErrorMessage ="Please Enter Supplier Contact No")]
 		public string ContactNo { get; set; }
-		[Required]
-		public DateTime CreationDate { get; set; }
-		[Required]
+		public DateTime? CreationDate { get; set; }
 		[StringLength(50)]
 		public string CreatedBy { get; set; }
-		public DateTime? LastUpdatedBy { get; set; }
-		public string LastUpdateDate { get; set; }
+		public string LastUpdatedBy { get; set; }
+		public DateTime? LastUpdateDate { get; set; }
 	}
 	public class Users
 	{
 		public int Id { get; set; }
-		[Required]
+		[Required(ErrorMessage ="Please Enter Username")]
 		[StringLength(50)]
-		[Index(IsUnique = true)]
 		public string UserName { get; set; }
-		[Required]
+		[Required(ErrorMessage ="Please Enter the User Role")]
 		public virtual UserRole UserRole { get; set; }
 
-		[Required]
+		[Required(ErrorMessage ="Please Enter the User Status")]
 		public virtual UserStatus UserStatus { get; set; }
 
-		[Required]
+		[Required(ErrorMessage ="User Fullname is Required")]
 		[StringLength(100)]
 		public string FullName { get; set; }
-		[Required]
-		public DateTime CreationDate { get; set; }
-		[Required]
+		public DateTime? CreationDate { get; set; }
 		[StringLength(50)]
 		public string CreatedBy { get; set; }
-		public DateTime? LastUpdatedBy { get; set; }
-		public string LastUpdateDate { get; set; }
+		public string LastUpdatedBy { get; set; }
+		public DateTime? LastUpdateDate { get; set; }
 	}
 	public class Inventory
 	{
@@ -140,44 +119,43 @@ namespace PointOfSale.Models
 		[Index(IsUnique = true)]
 		[StringLength(100)]
 		public string StockNo { get; set; }
-		[Required]
+		[Required(ErrorMessage ="Please Enter Supplier Information")]
 		[StringLength(100)]
 		public virtual Suppliers Supplier { get; set; }
 		[StringLength(50)]
 		public string BarcodeNo { get; set; }
-		[Required]
+		[Required(ErrorMessage ="Product Category is Required")]
 		public virtual Category Category { get; set; }
 		public string UnitType { get; set; }
-		[Required]
+		[Required(ErrorMessage ="Please Enter Cost Price")]
 		public float CostPrice { get; set; }
-		[Required]
+		[Required(ErrorMessage ="Please Enter Item Per Price")]
 		public float PricePerItem { get; set; }
-		[Required]
+		[Required(ErrorMessage ="Please Enter Discount Amount")]
 		public float Discount { get; set; }
 		[DatabaseGenerated(DatabaseGeneratedOption.Computed)]
 		public float TotalCost { get; private set; }
-		[Required]
+		[Required(ErrorMessage ="Please Enter Vat Amount")]
 		public float Vat { get; set; }
-		[Required]
+		[Required(ErrorMessage ="Quantity of Item is Required")]
 		public int TotalQty { get; set; }
+		[Required(ErrorMessage ="Manufacturing Date is required")]
 		public DateTime ManufDate { get; set; }
-		public DateTime ExpiryDate { get; set; }
-		[Required]
+		public DateTime? ExpiryDate { get; set; }
+		[Required(ErrorMessage ="Please Enter the No of Days the system should prompt for restock")]
 		public int PromptDays { get; set; }
-		[Required]
+		[Required(ErrorMessage ="Please Enter the Mininim Level an Item should reach before restocking")]
 		public int MinLevelStock { get; set; }
 		public string FDBNo { get; set; }
-		[Required]
-		public DateTime CreatedDate { get; set; }
+		public DateTime? CreatedDate { get; set; }
 		public string CreatedBy { get; set; }
 		public string LastUpdatedBy { get; set; }
-		public DateTime LastUpdateDate { get; set; }
+		public DateTime? LastUpdateDate { get; set; }
 	}
 	public class Retail : Inventory
 	{
 		//unless there is a different an added implentation
 	}
-
 	public class WholeSale : Inventory
 	{
 		//unless there is a different an added implentation

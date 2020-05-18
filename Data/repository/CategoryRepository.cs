@@ -1,20 +1,22 @@
 ﻿using PointOfSale.Data.interfaces;
 using PointOfSale.Models;
+using PointOfSale.Models.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 
 namespace PointOfSale.Data.repository
 {
 	public class CategoryRepository : ICategory
 	{
-		private readonly POSContext _context;
+		private readonly POSContext _context = new POSContext();
 
-		public CategoryRepository(POSContext context)
-		{
-			_context = context;
-		}
+		//public CategoryRepository(POSContext context)
+		//{
+		//	_context = context;
+		//}
 		public void AddCategory(Category category)
 		{
 			if (category == null)
@@ -23,10 +25,11 @@ namespace PointOfSale.Data.repository
 			}
 			var savecategory = new Category()
 			{
-				Code = category.Code,
 				Name = category.Name,
 				CreatedBy = "",
 				CreationDate = DateTime.Now,
+				LastUpdateDate = null,
+				LastUpdatedBy = ""
 
 			};
 			_context.Categories.Add(savecategory);
@@ -46,6 +49,7 @@ namespace PointOfSale.Data.repository
 		public IEnumerable<Category> GetCategories()
 		{
 			return _context.Categories.ToList();
+			
 		}
 
 		public Category GetCategory(int id)
@@ -56,6 +60,20 @@ namespace PointOfSale.Data.repository
 
 		public void UpdateCategory(Category category, int id)
 		{
+			try
+			{
+				Category cat = _context.Categories.FirstOrDefault(p => p.Id == id);
+				cat.Name = category.Name;
+				cat.LastUpdateDate = DateTime.Now;
+				cat.LastUpdatedBy = "";
+				_context.SaveChanges();
+
+			}
+			catch (Exception)
+			{
+
+				throw;
+			}
 			
 		}
 	}
