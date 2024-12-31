@@ -2,8 +2,10 @@
 
 namespace App\Filament\Resources;
 
+use App\Enum\StockUnitEnum;
 use Filament\Forms;
 use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Split;
 use Filament\Support\Enums\Alignment;
 use Filament\Tables;
 use App\Models\Stock;
@@ -45,11 +47,16 @@ class DailyTransactionResource extends Resource
                             ->schema([
                                 TableRepeater::make('sales_info')
                                     ->headers([
-                                        Header::make('items')->align(Alignment::Center),
-                                        Header::make('Unit')->align(Alignment::Center),
-                                        Header::make('Price')->align(Alignment::Center),
-                                        Header::make('Qty')->align(Alignment::Center),
-                                        Header::make(name: 'Total')->align(Alignment::Center),
+                                        Header::make('items')
+                                            ->width('150px'),
+                                        Header::make('Unit')
+                                            ->width('150px'),
+                                        Header::make('Price')
+                                            ->width('100px'),
+                                        Header::make('Qty')
+                                            ->width('90px'),
+                                        Header::make(name: 'Total')
+                                            ->width('95px'),
                                     ])
                                     ->schema([
                                         Select::make('item_stock')
@@ -67,18 +74,19 @@ class DailyTransactionResource extends Resource
                                             ->reactive()
                                             ->searchable()
                                             ->afterStateUpdated(function ($state, $set, $get) {
+                                                $set('item_price', 0.00);
                                                 $stock = Stock::where('id', (int) $get('item_stock'))->first();
                                                 switch ($state) {
-                                                    case 'WHL':
+                                                    case StockUnitEnum::WHOLESALE->value:
                                                         $set('item_price', $stock->sp_wholesale ?? 0.00);
                                                         break;
-                                                    case 'RTL':
+                                                    case StockUnitEnum::RETAIL->value:
                                                         $set('item_price', $stock->sp_retail ?? 0.00);
                                                         break;
-                                                    case 'BX':
+                                                    case StockUnitEnum::BOX->value:
                                                         $set('item_price', $stock->sp_box ?? 0.00);
                                                         break;
-                                                    case 'KG':
+                                                    case StockUnitEnum::KILOS->value:
                                                         $set('item_price', $stock->sp_kg ?? 0.00);
                                                         break;
                                                     default:
@@ -93,27 +101,39 @@ class DailyTransactionResource extends Resource
                                         TextInput::make('qty')
                                             ->numeric()
                                             ->required()
-                                            ->reactive()
                                             ->minValue(1)
                                             ->afterStateUpdated(function ($state, $get, $set) {
                                                 $itemTotal = (float) $state * (float) $get('item_price');
-                                                $set('item_total', $itemTotal);
+                                                $set('item_total', $itemTotal ?? 0.00);
                                             }),
 
                                         TextInput::make('item_total')
-                                            ->default(fn($get) => $get('item_total'))
                                             ->disabled()
-                                            ->dehydrated(),
+                                            ->dehydrated()
+                                            ->reactive(),
                                     ])
                                     ->columnSpan('full')
                                     ->createItemButtonLabel('Add New Record')
                                     ->reactive()
-                                    ->afterStateUpdated(function ($state, callable $set) {
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
                                         $total = collect($state)
-                                            ->map(fn($item) => ($item['item_price'] ?? 0) * ($item['qty'] ?? 1))
+                                            ->map(fn($item) => ((float) $item['item_price'] ?? 0) * ((float) $item['qty'] ?? 1))
                                             ->sum(); // Sum all rows
                             
                                         $set('sub_total', $total);
+                                        $taxes = GovTax::get();
+                                        $updatedTaxes = $taxes->map(function ($tax) use ($total) {
+                                            return [
+                                                'name' => $tax->tax_name,
+                                                'percentage' => $tax->percentage,
+                                                'total_tax' => round((float) $total * ($tax->percentage / 100), 2),
+                                            ];
+                                        })->toArray();
+                                        $set('Taxes', $updatedTaxes);
+                                        $totalTaxes = collect($updatedTaxes)->sum('total_tax');
+                                        $set('total_taxes', round($totalTaxes, 2));
+                                        $set('amount_due', round((float) ($total + $totalTaxes), 2));
+                                        $set('original_amt_due', round((float) ($total + $totalTaxes), 2));
                                     })
                             ]),
 
@@ -124,19 +144,13 @@ class DailyTransactionResource extends Resource
                                     ->disabled()
                                     ->label('SubTotal')
                                     ->dehydrated()
-                                    ->reactive()
-                                    ->default(fn($get) => $get('sub_total'))
-                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        // Update Taxes when sub_total changes
-                                        $taxes = $get('Taxes') ?? [];
-                                        $updatedTaxes = collect($taxes)->map(function ($tax) use ($state) {
-                                            $tax['total_tax'] = $state * ($tax['percentage'] / 100);
-                                            return $tax;
-                                        })->toArray();
-                                        $set('Taxes', $updatedTaxes);
-                                    }),
-                                TextInput::make('discount')
+                                    ->reactive(),
+                                TextInput::make('total_taxes')
                                     ->numeric()
+                                    ->disabled()
+                                    ->label('Total Tax')
+                                    ->dehydrated()
+                                    ->reactive()
                                     ->default(0.00),
                                 TableRepeater::make('Taxes')
                                     ->columns(2)
@@ -146,6 +160,7 @@ class DailyTransactionResource extends Resource
                                         Header::make('total'),
                                     ])
                                     ->reactive()
+                                    ->columnSpanFull()
                                     ->schema([
                                         TextInput::make('name')
                                             ->label('tax')
@@ -162,7 +177,7 @@ class DailyTransactionResource extends Resource
                                             ->label('total')
                                             ->numeric()
                                             ->disabled()
-                                            ->default(0.00)
+                                            ->reactive()
                                             ->dehydrated()
                                             ->required(),
                                     ])
@@ -173,23 +188,31 @@ class DailyTransactionResource extends Resource
                                             return [
                                                 'name' => $tax->tax_name,
                                                 'percentage' => $tax->percentage,
-                                                'total_tax' => $subTotal * ($tax->percentage / 100),
+                                                'total_tax' => round($subTotal * ($tax->percentage / 100), 2),
                                             ];
                                         })->toArray();
                                     })
-                                    ->reactive()
-                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        $subTotal = $get('sub_total') ?? 0;
-                                        $updatedTaxes = collect($state)->map(function ($tax) use ($subTotal) {
-                                            $tax['total_tax'] = $subTotal * ($tax['percentage'] / 100);
-                                            return $tax;
-                                        })->toArray();
-
-                                        $set('Taxes', $updatedTaxes); // Update the repeater state
-                                    })
                                     ->disableItemCreation()
                                     ->disableItemDeletion()
-                                    ->required()
+                                    ->required(),
+                                TextInput::make('discount')
+                                    ->numeric()
+                                    ->reactive()
+                                    ->minValue(0)
+                                    ->label('Discount(Amount only)')
+                                    ->default(0.00)
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        $totalDue = (float) $get('original_amt_due') - (float) $state;
+                                        $set('amount_due', round($totalDue, 2));
+                                    }),
+                                TextInput::make('amount_due')
+                                    ->numeric()
+                                    ->disabled()
+                                    ->label('Amount Due')
+                                    ->dehydrated()
+                                    ->reactive()
+                                    ->default(0.00),
+                                Hidden::make('original_amt_due')
 
                             ])
 
