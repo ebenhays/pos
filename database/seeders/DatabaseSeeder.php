@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\PaymentType;
 use App\Models\ProductSellingType;
 use App\Models\ProductUnit;
 use App\Models\User;
@@ -63,6 +64,22 @@ class DatabaseSeeder extends Seeder
 
         foreach ($sellingType as $value) {
             ProductSellingType::factory()->create($value);
+        }
+
+        $pmtType = [
+            [
+                'name' => 'CASH',
+            ],
+            [
+                'name' => 'POS',
+            ],
+            [
+                'name' => 'MOBILE_MONEY',
+            ],
+        ];
+
+        foreach ($pmtType as $pmt) {
+            PaymentType::factory()->create($pmt);
         }
     }
 }

@@ -3,9 +3,11 @@
 namespace App\Filament\Resources;
 
 use App\Enum\StockUnitEnum;
+use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Split;
+use Filament\Notifications\Notification;
 use Filament\Support\Enums\Alignment;
 use Filament\Tables;
 use App\Models\Stock;
@@ -67,14 +69,17 @@ class DailyTransactionResource extends Resource
                                             ->preload()
                                             ->reactive()
                                             ->searchable()
+                                            ->required()
                                             ->afterStateUpdated(fn($set) => $set('item_unit', null)),
                                         Select::make('item_unit')
                                             ->options(fn() => ProductSellingType::all()->pluck('selling_type', 'selling_code'))
                                             ->native(false)
                                             ->reactive()
                                             ->searchable()
+                                            ->required()
                                             ->afterStateUpdated(function ($state, $set, $get) {
                                                 $set('item_price', 0.00);
+                                                $set('qty', 0.00);
                                                 $stock = Stock::where('id', (int) $get('item_stock'))->first();
                                                 switch ($state) {
                                                     case StockUnitEnum::WHOLESALE->value:
@@ -101,6 +106,7 @@ class DailyTransactionResource extends Resource
                                         TextInput::make('qty')
                                             ->numeric()
                                             ->required()
+                                            ->disabled(fn(callable $get) => (float) $get('item_price') <= 0.00)
                                             ->minValue(1)
                                             ->afterStateUpdated(function ($state, $get, $set) {
                                                 $itemTotal = (float) $state * (float) $get('item_price');
@@ -195,6 +201,25 @@ class DailyTransactionResource extends Resource
                                     ->disableItemCreation()
                                     ->disableItemDeletion()
                                     ->required(),
+
+                            ]),
+
+                        Section::make('Billing')
+                            ->columns()
+                            ->schema([
+                                Select::make('payment_type')
+                                    ->relationship('paymentType', 'name')
+                                    ->required()
+                                    ->native(false)
+                                    ->columnSpanFull(),
+
+                                TextInput::make('amount_due')
+                                    ->numeric()
+                                    ->disabled()
+                                    ->label('Amount Due')
+                                    ->dehydrated()
+                                    ->reactive()
+                                    ->default(0.00),
                                 TextInput::make('discount')
                                     ->numeric()
                                     ->reactive()
@@ -205,17 +230,42 @@ class DailyTransactionResource extends Resource
                                         $totalDue = (float) $get('original_amt_due') - (float) $state;
                                         $set('amount_due', round($totalDue, 2));
                                     }),
-                                TextInput::make('amount_due')
+                                TextInput::make('customer_amount')
                                     ->numeric()
+                                    ->minValue(1)
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->default(0)
+                                    ->afterStateUpdated(function ($state, callable $get, callable $set) {
+                                        if ((float) $state <= 0) {
+                                            return Notification::make()
+                                                ->title('Please check customer amount')
+                                                ->danger()
+                                                ->color('danger')
+                                                ->send();
+                                        }
+                                        $totalAmtPayable = (float) $get('amount_due');
+                                        if ((float) $state < $totalAmtPayable) {
+                                            return Notification::make()
+                                                ->title('customer amount is less than amount due')
+                                                ->danger()
+                                                ->color('danger')
+                                                ->send();
+                                        }
+
+                                        $set('customer_change', round((float) $state - $totalAmtPayable, 2));
+
+
+
+                                    }),
+                                TextInput::make('customer_change')
                                     ->disabled()
-                                    ->label('Amount Due')
                                     ->dehydrated()
                                     ->reactive()
                                     ->default(0.00),
+
                                 Hidden::make('original_amt_due')
-
                             ])
-
                     ]),
 
             ]);

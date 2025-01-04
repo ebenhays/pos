@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Helpers\CodeGenerator;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Stock;
@@ -37,7 +38,7 @@ class StockResource extends Resource
                         TextInput::make(name: 'item_no')
                             ->disabled()
                             ->dehydrated()
-                            ->default(fn() => "ST" . date("Ym") . substr(md5(uniqid(mt_rand(), true)), 0, 6)),
+                            ->default(fn() => "ST" . CodeGenerator::generateCode()),
                         TextInput::make('item')
                             ->required()
                             ->label('Item Name')
