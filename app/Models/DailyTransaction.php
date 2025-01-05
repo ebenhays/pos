@@ -7,7 +7,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DailyTransaction extends Model
 {
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'batch_no',
+        'transaction_date',
+        'stock_id',
+        'payment_type_id',
+        'item_amount',
+        'amount_tendered',
+        'discount',
+        'total_tax',
+        'qty_sold',
+        'selling_code',
+        'user_id'
+    ];
 
     public function stock(): BelongsTo
     {
@@ -21,5 +33,10 @@ class DailyTransaction extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function productSellingType(): BelongsTo
+    {
+        return $this->belongsTo(DailyTransaction::class, 'selling_code', 'selling_code');
     }
 }

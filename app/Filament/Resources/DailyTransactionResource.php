@@ -106,10 +106,21 @@ class DailyTransactionResource extends Resource
                                         TextInput::make('qty')
                                             ->numeric()
                                             ->required()
+                                            ->live(onBlur: true)
                                             ->disabled(fn(callable $get) => (float) $get('item_price') <= 0.00)
                                             ->minValue(1)
                                             ->afterStateUpdated(function ($state, $get, $set) {
-                                                $itemTotal = (float) $state * (float) $get('item_price');
+                                                $stock = Stock::where('id', (int) $get('item_stock'))->first();
+                                                $stockRemaining = $stock->item_qty_remaining;
+                                                $qtyRequested = (float) $state;
+                                                if ($stockRemaining < $qtyRequested) {
+                                                    return Notification::make()
+                                                        ->title("Quantity requested ({$qtyRequested}) is more than quantity remaining({$stockRemaining})")
+                                                        ->danger()
+                                                        ->color('danger')
+                                                        ->send();
+                                                }
+                                                $itemTotal = $qtyRequested * (float) $get('item_price');
                                                 $set('item_total', $itemTotal ?? 0.00);
                                             }),
 
@@ -264,7 +275,8 @@ class DailyTransactionResource extends Resource
                                     ->reactive()
                                     ->default(0.00),
 
-                                Hidden::make('original_amt_due')
+                                Hidden::make('original_amt_due'),
+                                Hidden::make('batch_no')
                             ])
                     ]),
 
@@ -298,36 +310,12 @@ class DailyTransactionResource extends Resource
                 Tables\Columns\TextColumn::make('user.name')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('qty_wholesale_sold')
+                Tables\Columns\TextColumn::make('qty_sold')
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('qty_retail_sold')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('productSellingType.selling_code')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('total_wholesale_retail_qty_sold')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('total_wholesale_sold')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('total_retail_sold')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('total_wholesale_retail_sold')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('qty_box_sold')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('qty_kg_sold')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('total_qty_box_sold')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('total_qty_kg_sold')
-                    ->numeric()
-                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -344,9 +332,7 @@ class DailyTransactionResource extends Resource
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
+                Tables\Actions\BulkActionGroup::make([]),
             ]);
     }
 

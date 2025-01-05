@@ -18,19 +18,11 @@ return new class extends Migration {
             $table->unsignedBigInteger('payment_type_id');
             $table->decimal('item_amount')->default(0.00);
             $table->decimal('amount_tendered')->default(0.00);
-            $table->decimal('change_given')->default(0.00);
+            $table->decimal('discount')->default(0.00);
+            $table->decimal('total_tax')->default(0.00);
+            $table->decimal('qty_sold')->default(0);
+            $table->string('selling_code');
             $table->unsignedBigInteger('user_id')->nullable();
-            $table->integer('qty_wholesale_sold')->default(0);
-            $table->integer(column: 'qty_retail_sold')->default(0);
-            $table->decimal(column: 'total_wholesale_retail_qty_sold')->storedAs('qty_wholesale_sold + qty_retail_sold');
-            $table->decimal('total_wholesale_sold')->default(0.00);
-            $table->decimal('total_retail_sold')->default(0.00);
-            $table->decimal('total_wholesale_retail_sold')->storedAs('total_wholesale_sold + total_retail_sold');
-            $table->integer('qty_box_sold')->default(0);
-            $table->integer(column: 'qty_kg_sold')->default(0);
-            $table->decimal('total_qty_box_sold')->default(0.00);
-            $table->decimal('total_qty_kg_sold')->default(0.00);
-
             $table->timestamps();
             $table->index('batch_no', 'batch_no_index');
         });
