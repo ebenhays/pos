@@ -32,6 +32,7 @@ class StockResource extends Resource
         return $form
             ->schema([
                 Section::make('Create New Stock')
+                    ->icon('heroicon-o-information-circle')
                     ->description('Add new stock')
                     ->columns()
                     ->schema([

@@ -27,6 +27,7 @@ class ExpenseResource extends Resource
         return $form
             ->schema([
                 Section::make('Track Expenses')
+                    ->icon('heroicon-o-information-circle')
                     ->description('Track expesnses made')
                     ->schema([
                         TextInput::make('title')

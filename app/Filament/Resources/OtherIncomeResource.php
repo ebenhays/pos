@@ -27,6 +27,7 @@ class OtherIncomeResource extends Resource
         return $form
             ->schema([
                 Section::make('Track Income')
+                    ->icon('heroicon-o-information-circle')
                     ->description('Track all income made')
                     ->schema([
                         TextInput::make('title')

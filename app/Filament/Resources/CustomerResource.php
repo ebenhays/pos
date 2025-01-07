@@ -31,6 +31,7 @@ class CustomerResource extends Resource
         return $form
             ->schema([
                 Section::make('Customer Information')
+                    ->icon('heroicon-o-information-circle')
                     ->description('Add customer information')
                     ->columns()
                     ->schema([

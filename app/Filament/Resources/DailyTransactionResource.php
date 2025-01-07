@@ -2,28 +2,33 @@
 
 namespace App\Filament\Resources;
 
-use App\Enum\StockUnitEnum;
-use Filament\Actions\Action;
+use Carbon\Carbon;
 use Filament\Forms;
-use Filament\Forms\Components\Hidden;
-use Filament\Forms\Components\Split;
-use Filament\Notifications\Notification;
-use Filament\Support\Enums\Alignment;
 use Filament\Tables;
 use App\Models\Stock;
 use App\Models\GovTax;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use App\Enum\StockUnitEnum;
+use Filament\Actions\Action;
 use App\Models\DailyTransaction;
+use Filament\Infolists\Infolist;
 use Filament\Resources\Resource;
 use Awcodes\TableRepeater\Header;
 use App\Models\ProductSellingType;
+use Illuminate\Support\Facades\DB;
+use Filament\Forms\Components\Split;
 use Filament\Support\Enums\MaxWidth;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
+use Filament\Support\Enums\Alignment;
 use Filament\Forms\Components\Section;
+use Filament\Infolists\Components\Section as InfoSection;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Infolists\Components\TextEntry;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\DailyTransactionResource\Pages;
@@ -291,48 +296,61 @@ class DailyTransactionResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('transaction_date')
                     ->date()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('stock.id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('paymentType.id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('item_amount')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('amount_tendered')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('change_given')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('user.name')
-                    ->numeric()
+                    ->label('Sales Date')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('qty_sold')
                     ->numeric()
+                    ->label('Total Qty'),
+                Tables\Columns\TextColumn::make('item_amount')
+                    ->numeric()
+                    ->label('Total Price')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('productSellingType.selling_code')
+                Tables\Columns\TextColumn::make('total')
+                    ->numeric()
+                    ->label('Grand Total')
                     ->sortable(),
-
-                Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-            ])
+            ])->query(DailyTransaction::query()
+                ->select([
+                    'batch_no',
+                    'transaction_date',
+                    DB::raw('SUM(qty_sold) AS qty_sold'),
+                    DB::raw('SUM(item_amount) AS item_amount'),
+                    DB::raw('SUM(total) AS total'),
+                    DB::raw('MAX(id) AS id')
+                ])
+                ->whereDate('transaction_date', now())
+                ->groupBy('batch_no', 'transaction_date')
+                ->orderBy('id'))
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([]),
+            ]);
+    }
+
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                InfoSection::make('Daily Sales')
+                    ->icon('heroicon-o-information-circle')
+                    ->schema([
+                        TextEntry::make('transaction_date')
+                            ->label('Sales Date'),
+                        TextEntry::make('paymentType.Name')
+                            ->label('Paid With'),
+                        TextEntry::make('discount')
+                            ->label('Discount'),
+                        TextEntry::make('user.name'),
+                        TextEntry::make('created_at'),
+                        TextEntry::make('batch_no'),
+                    ])->columns(3),
             ]);
     }
 
@@ -348,7 +366,7 @@ class DailyTransactionResource extends Resource
         return [
             'index' => Pages\ListDailyTransactions::route('/'),
             'create' => Pages\CreateDailyTransaction::route('/create'),
-            'edit' => Pages\EditDailyTransaction::route('/{record}/edit'),
+            'view' => Pages\ViewDailyTransaction::route('/{record}'),
         ];
     }
 }

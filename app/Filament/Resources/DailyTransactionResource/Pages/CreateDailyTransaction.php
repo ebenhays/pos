@@ -16,7 +16,10 @@ use App\Filament\Resources\DailyTransactionResource;
 class CreateDailyTransaction extends CreateRecord
 {
     protected static string $resource = DailyTransactionResource::class;
-
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
     protected function handleRecordCreation(array $data): Model
     {
         //save record

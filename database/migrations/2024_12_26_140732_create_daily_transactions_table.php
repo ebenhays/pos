@@ -21,6 +21,7 @@ return new class extends Migration {
             $table->decimal('discount')->default(0.00);
             $table->decimal('total_tax')->default(0.00);
             $table->decimal('qty_sold')->default(0);
+            $table->decimal(column: 'total')->storedAs('item_amount * qty_sold');
             $table->string('selling_code');
             $table->unsignedBigInteger('user_id')->nullable();
             $table->timestamps();

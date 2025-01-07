@@ -26,6 +26,7 @@ class GovTaxResource extends Resource
         return $form
             ->schema([
                 Section::make('Government Taxes')
+                    ->icon('heroicon-o-information-circle')
                     ->description('Taxes to be charged on items')
                     ->schema([
                         TextInput::make('tax_name')
