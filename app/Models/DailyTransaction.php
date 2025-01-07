@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class DailyTransaction extends Model
 {
@@ -18,7 +19,8 @@ class DailyTransaction extends Model
         'total_tax',
         'qty_sold',
         'selling_code',
-        'user_id'
+        'user_id',
+        'total_sales'
     ];
 
     public function stock(): BelongsTo
@@ -38,5 +40,15 @@ class DailyTransaction extends Model
     public function productSellingType(): BelongsTo
     {
         return $this->belongsTo(DailyTransaction::class, 'selling_code', 'selling_code');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(DailyTransaction::class, 'batch_no', 'batch_no');
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'batch_no';
     }
 }

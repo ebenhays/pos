@@ -38,8 +38,12 @@ class CreateDailyTransaction extends CreateRecord
                     'total_tax' => $data['total_taxes'],
                     'qty_sold' => $item['qty'],
                     'selling_code' => $item['item_unit'],
-                    'user_id' => auth()->id()
+                    'user_id' => auth()->id(),
+                    'total_sales' => $data['amount_due']
                 ]);
+                $stock = Stock::firstWhere('id', $item["item_stock"]);
+                $stock->item_qty_remaining -= $item['qty'];
+                $stock->save();
             }
             //save tax info if any
             if (!empty($data['Taxes'])) {

@@ -9,4 +9,6 @@ use Filament\Resources\Pages\ViewRecord;
 class ViewDailyTransaction extends ViewRecord
 {
     protected static string $resource = DailyTransactionResource::class;
+
+
 }

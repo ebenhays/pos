@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Resources\DailyTransactionResource\RelationManagers\ChildrenRelationManager;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Tables;
@@ -41,7 +42,10 @@ class DailyTransactionResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
     protected static ?string $modelLabel = 'Sales';
-
+    public static function getRecordRouteKeyName(): string
+    {
+        return 'batch_no';
+    }
     public static function form(Form $form): Form
     {
         return $form
@@ -299,9 +303,9 @@ class DailyTransactionResource extends Resource
                     ->label('Sales Date')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('qty_sold')
+                Tables\Columns\TextColumn::make('item_count')
                     ->numeric()
-                    ->label('Total Qty'),
+                    ->label('Total Items'),
                 Tables\Columns\TextColumn::make('item_amount')
                     ->numeric()
                     ->label('Total Price')
@@ -314,9 +318,9 @@ class DailyTransactionResource extends Resource
                 ->select([
                     'batch_no',
                     'transaction_date',
-                    DB::raw('SUM(qty_sold) AS qty_sold'),
+                    DB::raw('COUNT(batch_no) AS item_count'),
                     DB::raw('SUM(item_amount) AS item_amount'),
-                    DB::raw('SUM(total) AS total'),
+                    DB::raw('SUM(total_per_item) AS total'),
                     DB::raw('MAX(id) AS id')
                 ])
                 ->whereDate('transaction_date', now())
@@ -338,7 +342,7 @@ class DailyTransactionResource extends Resource
     {
         return $infolist
             ->schema([
-                InfoSection::make('Daily Sales')
+                InfoSection::make('Sales Information')
                     ->icon('heroicon-o-information-circle')
                     ->schema([
                         TextEntry::make('transaction_date')
@@ -347,17 +351,29 @@ class DailyTransactionResource extends Resource
                             ->label('Paid With'),
                         TextEntry::make('discount')
                             ->label('Discount'),
-                        TextEntry::make('user.name'),
+                        TextEntry::make('user.name')
+                            ->label('Cashier'),
                         TextEntry::make('created_at'),
                         TextEntry::make('batch_no'),
-                    ])->columns(3),
+                        TextEntry::make('total_sales'),
+                        TextEntry::make('total_tax'),
+                        TextEntry::make('amount_tendered')
+                            ->label('Customer gave'),
+                        TextEntry::make('amount_tendered')
+                            ->formatStateUsing(function ($record) {
+                                $customerGave = $record->amount_tendered ?? 0;
+                                $totalSales = $record->total_sales ?? 0;
+                                return (float) $customerGave - (float) $totalSales;
+                            })
+                            ->label('Change'),
+                    ])->columns(5),
             ]);
     }
 
     public static function getRelations(): array
     {
         return [
-            //
+            ChildrenRelationManager::class
         ];
     }
 
@@ -366,7 +382,7 @@ class DailyTransactionResource extends Resource
         return [
             'index' => Pages\ListDailyTransactions::route('/'),
             'create' => Pages\CreateDailyTransaction::route('/create'),
-            'view' => Pages\ViewDailyTransaction::route('/{record}'),
+            'view' => Pages\ViewDailyTransaction::route('/{record:batch_no}'),
         ];
     }
 }
