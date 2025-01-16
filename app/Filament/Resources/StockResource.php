@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources;
 
+use App\Enum\StockUnitEnum;
 use App\Helpers\CodeGenerator;
+use App\Models\ProductSellingType;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Stock;
@@ -48,20 +50,42 @@ class StockResource extends Resource
                             ->relationship('category', 'name')
                             ->required(),
                         Select::make('item_unit_code')
-                            ->options(fn() =>
-                                ProductUnit::all()->pluck('prod_desc', 'prod_unit_code'))
-                            ->label('Prod Unit')
+                            ->options([
+                                'WHL/RTL' => 'WHOLESALE OR RETAIL',
+                                'BX/KG' => 'BOX OR KILOS'
+                            ])
+                            ->label('Item Sold as')
                             ->required()
                             ->reactive()
                             ->afterStateUpdated(function ($state, $set) {
-                                if (in_array((int) $state, [ProductUnitEnum::SINGLE_ITEM->value, ProductUnitEnum::BOTTLE->value])) {
-                                    $set('disable_sp_wholesale', true);
-                                    $set('disable_sp_box', true);
-                                    $set('disable_sp_kg', true);
-                                } else {
-                                    $set('disable_sp_wholesale', false);
-                                    $set('disable_sp_box', false);
-                                    $set('disable_sp_kg', false);
+                                switch ($state) {
+                                    case 'WHL/RTL':
+                                        $set('disable_sp_wholesale', false);
+                                        $set('disable_sp_box', true);
+                                        $set('disable_sp_kg', true);
+                                        $set('disable_sp_retail', false);
+                                        $set('disable_cp_kg', true);
+                                        $set('disable_cp_box', true);
+                                        $set('disable_cp_retail_wholesale', false);
+                                        break;
+                                    case 'BX/KG':
+                                        $set('disable_sp_box', false);
+                                        $set('disable_sp_wholesale', true);
+                                        $set('disable_sp_kg', false);
+                                        $set('disable_cp_retail_wholesale', true);
+                                        $set('disable_sp_retail', true);
+                                        $set('disable_cp_kg', false);
+                                        $set('disable_cp_box', false);
+                                        break;
+                                    default:
+                                        $set('disable_sp_wholesale', true);
+                                        $set('disable_sp_box', true);
+                                        $set('disable_sp_kg', true);
+                                        $set('disable_sp_retail', true);
+                                        $set('disable_cp_retail_wholesale', true);
+                                        $set('disable_cp_kg', true);
+                                        $set('disable_cp_box', true);
+                                        break;
                                 }
                             }),
                         TextInput::make('type')
@@ -81,41 +105,57 @@ class StockResource extends Resource
                             ->default(0),
                         TextInput::make('item_cost_price')
                             ->required()
+                            ->disabled(fn($get) => $get('disable_cp_retail_wholesale') || !filled($get('item_unit_code')))
                             ->numeric()
                             ->minValue(0)
                             ->label('Cost Price')
                             ->default(0.00),
-
+                        TextInput::make('item_cost_price_per_box')
+                            ->required()
+                            ->numeric()
+                            ->disabled(fn($get) => $get('disable_cp_box') || !filled($get('item_unit_code')))
+                            ->minValue(0)
+                            ->label('Cost Price(Box)')
+                            ->default(0.00),
+                        TextInput::make('item_cost_price_per_kg')
+                            ->required()
+                            ->numeric()
+                            ->disabled(fn($get) => $get('disable_cp_kg') || !filled($get('item_unit_code')))
+                            ->minValue(0)
+                            ->label('Cost Price(Kilos)')
+                            ->default(0.00),
                         TextInput::make('sp_wholesale')
                             ->required()
                             ->numeric()
                             ->dehydrated()
-                            ->disabled(fn($get) => $get('disable_sp_wholesale'))
+                            ->disabled(fn($get) => $get('disable_sp_wholesale') || !filled($get('item_unit_code')))
                             ->minValue(0)
                             ->label('Selling Price(Wholesale)')
                             ->default(0.00),
                         TextInput::make('sp_retail')
                             ->required()
+                            ->disabled(fn($get) => $get('disable_sp_retail') || !filled($get('item_unit_code')))
                             ->numeric()
                             ->minValue(0)
                             ->label('Selling Price(Retail)')
                             ->default(0.00),
                         TextInput::make('sp_box')
                             ->required()
-                            ->disabled(fn($get) => $get('disable_sp_box'))
+                            ->disabled(fn($get) => $get('disable_sp_box') || !filled($get('item_unit_code')))
                             ->minValue(0)
                             ->numeric()
                             ->label('Selling Price(box)')
                             ->default(0.00),
                         TextInput::make('sp_kg')
                             ->required()
-                            ->disabled(fn($get) => $get('disable_sp_kg'))
+                            ->disabled(fn($get) => $get('disable_sp_kg') || !filled($get('item_unit_code')))
                             ->numeric()
                             ->minValue(0)
                             ->label('Selling Price(kilos)')
                             ->default(0.00),
                         TextInput::make('additions')
                             ->required()
+                            ->label('Other Cost')
                             ->numeric()
                             ->default(0.00),
                         DatePicker::make('manufacture_date')
@@ -185,13 +225,14 @@ class StockResource extends Resource
                     ->searchable(),
                 TextColumn::make('additions')
                     ->numeric()
+                    ->label('Other Cost')
                     ->sortable(),
-                TextColumn::make('cp_box')
+                TextColumn::make('item_cost_price_per_box')
                     ->numeric()
                     ->label('CostPrice(Box)')
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
-                TextColumn::make('cp_kg')
+                TextColumn::make('item_cost_price_per_kg')
                     ->numeric()
                     ->label('CostPrice(Kg)')
                     ->toggleable(isToggledHiddenByDefault: true)
@@ -200,7 +241,7 @@ class StockResource extends Resource
                     ->numeric()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
-                TextColumn::make('total')
+                TextColumn::make('total_cost')
                     ->numeric()
                     ->sortable(),
                 TextColumn::make('created_at')

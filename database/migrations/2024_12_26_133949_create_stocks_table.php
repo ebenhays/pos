@@ -14,9 +14,11 @@ return new class extends Migration {
             $table->id();
             $table->string('item');
             $table->string('type')->nullable();
+            $table->string('item_unit_code')->nullable();
             $table->decimal('opening_stock')->default(0.00);
             $table->decimal('item_cost_price')->default(0.00);
-            $table->integer('item_unit_code')->nullable();
+            $table->decimal('item_cost_price_per_box')->default(0.00);
+            $table->decimal('item_cost_price_per_kg')->default(0.00);
             $table->decimal('sp_wholesale')->default(0.00);
             $table->decimal('sp_retail')->default(0.00);
             $table->decimal('sp_box')->default(0.00);
@@ -28,10 +30,8 @@ return new class extends Migration {
             $table->string('item_no', 20)->unique();
             $table->unsignedBigInteger('category_id')->nullable();
             $table->decimal('additions')->default(0.00);
-            $table->decimal('cp_box')->storedAs('item_cost_price + 0');
-            $table->decimal('cp_kg')->storedAs(('cp_box / 10'));
             $table->decimal('total_stock')->storedAs('opening_stock + additions');
-            $table->decimal('total')->storedAs('total_stock * item_cost_price');
+            $table->decimal('total_cost')->storedAs("(`total_stock` * `item_cost_price`) + (`total_stock` * `item_cost_price_per_box`)");
             $table->timestamps();
 
             $table->index(['item_no', 'category_id'], 'item_no_category_index');

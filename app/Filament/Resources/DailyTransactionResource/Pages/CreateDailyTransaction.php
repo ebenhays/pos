@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources\DailyTransactionResource\Pages;
 
+use App\Enum\StockUnitEnum;
+use App\Models\DailyTransactionSummary;
+use App\Models\ProductSellingType;
 use Carbon\Carbon;
 use App\Models\Stock;
 use Filament\Actions;
@@ -12,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Resources\Pages\CreateRecord;
 use App\Filament\Resources\DailyTransactionResource;
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
 
 class CreateDailyTransaction extends CreateRecord
 {
@@ -27,6 +31,13 @@ class CreateDailyTransaction extends CreateRecord
         $savedRecords = [];
         DB::transaction(function () use ($data, $batchNo, &$savedRecords) {
             foreach ($data['sales_info'] as $item) {
+                if ($data["customer_amount"] < $data['amount_due']) {
+                    throw new BadRequestException('Customer Amount is lesser');
+                }
+                $stock = Stock::firstWhere('id', $item["item_stock"]);
+                if ($stock->item_qty_remaining - $item['qty'] < 0) {
+                    throw new BadRequestException("{$stock->item} is low in quantity. just left with {$stock->item_qty_remaining}");
+                }
                 $savedRecords[] = DailyTransaction::create([
                     'batch_no' => $batchNo,
                     'transaction_date' => now(),
@@ -41,9 +52,56 @@ class CreateDailyTransaction extends CreateRecord
                     'user_id' => auth()->id(),
                     'total_sales' => $data['amount_due']
                 ]);
-                $stock = Stock::firstWhere('id', $item["item_stock"]);
                 $stock->item_qty_remaining -= $item['qty'];
                 $stock->save();
+
+
+                //save daily summaries
+                $totalPrice = (float) $item["item_price"] * (float) $item['qty'];
+                $wholesaleSales = $item['item_unit'] === StockUnitEnum::WHOLESALE->value ? $totalPrice : 0;
+                $retailSales = $item['item_unit'] === StockUnitEnum::RETAIL->value ? $totalPrice : 0;
+                $salesInBox = $item['item_unit'] === StockUnitEnum::BOX->value ? $totalPrice : 0;
+                $salesInKilos = $item['item_unit'] === StockUnitEnum::KILOS->value ? $totalPrice : 0;
+                $totalWholeSalesQtySold = $this->getProductUnitQtySold(StockUnitEnum::WHOLESALE->value, (int) $item["item_stock"]);
+                $totalRetailSalesQtySold = $this->getProductUnitQtySold(StockUnitEnum::RETAIL->value, (int) $item["item_stock"]);
+                $totalBoxSalesQtySold = $this->getProductUnitQtySold(StockUnitEnum::BOX->value, (int) $item["item_stock"]);
+                $totalKilosSalesQtySold = $this->getProductUnitQtySold(StockUnitEnum::KILOS->value, (int) $item["item_stock"]);
+                $COS_wholesale = $item['item_unit'] === StockUnitEnum::WHOLESALE->value ?
+                    $totalWholeSalesQtySold * $stock->item_cost_price : 0;
+                $COS_retail = $item['item_unit'] === StockUnitEnum::RETAIL->value ?
+                    $totalRetailSalesQtySold * $stock->item_cost_price : 0;
+                $COS_box = $item['item_unit'] === StockUnitEnum::BOX->value ?
+                    $totalBoxSalesQtySold * $stock->item_cost_price_per_box : 0;
+                $COS_kilos = $item['item_unit'] === StockUnitEnum::KILOS->value ?
+                    $totalKilosSalesQtySold * $stock->item_cost_price_per_kg : 0;
+                $dailyTransactionSummary =
+                    DailyTransactionSummary::where('stock_id', $item["item_stock"])
+                        ->whereDate('transaction_date', now())
+                        ->first();
+                if (!$dailyTransactionSummary) {
+                    DailyTransactionSummary::create([
+                        'transaction_date' => now(),
+                        'stock_id' => $item["item_stock"],
+                        'total_wholesale_sales' => $wholesaleSales,
+                        'total_retail_sales' => $retailSales,
+                        'total_sales_in_box' => $salesInBox,
+                        'total_sales_in_kilos' => $salesInKilos,
+                        'COS_wholesale' => $COS_wholesale,
+                        'COS_retail' => $COS_retail,
+                        'COS_box' => $COS_box,
+                        'COS_kilos' => $COS_kilos,
+                    ]);
+                } else {
+                    $dailyTransactionSummary->total_wholesale_sales += $wholesaleSales;
+                    $dailyTransactionSummary->total_retail_sales += $retailSales;
+                    $dailyTransactionSummary->total_sales_in_box += $salesInBox;
+                    $dailyTransactionSummary->total_sales_in_kilos += $salesInKilos;
+                    $dailyTransactionSummary->COS_wholesale = $COS_wholesale;
+                    $dailyTransactionSummary->COS_retail = $COS_retail;
+                    $dailyTransactionSummary->COS_box = $COS_box;
+                    $dailyTransactionSummary->COS_kilos = $COS_kilos;
+                    $dailyTransactionSummary->save();
+                }
             }
             //save tax info if any
             if (!empty($data['Taxes'])) {
@@ -57,8 +115,19 @@ class CreateDailyTransaction extends CreateRecord
                 }
             }
 
+
+
         });
         return end($savedRecords);
+
+    }
+
+    private function getProductUnitQtySold(string $unit, int $stockId): float
+    {
+        return DailyTransaction::where('stock_id', $stockId)
+            ->where('selling_code', $unit)
+            ->whereDate('transaction_date', now())
+            ->sum('qty_sold');
 
     }
 }

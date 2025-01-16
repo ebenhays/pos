@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\DailyTransactionResource\RelationManagers\ChildrenRelationManager;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Tables;
@@ -18,22 +17,25 @@ use Filament\Resources\Resource;
 use Awcodes\TableRepeater\Header;
 use App\Models\ProductSellingType;
 use Illuminate\Support\Facades\DB;
+use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\Split;
 use Filament\Support\Enums\MaxWidth;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Support\Enums\Alignment;
 use Filament\Forms\Components\Section;
-use Filament\Infolists\Components\Section as InfoSection;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Forms\Components\DatePicker;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Infolists\Components\TextEntry;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Infolists\Components\Section as InfoSection;
 use App\Filament\Resources\DailyTransactionResource\Pages;
 use App\Filament\Resources\DailyTransactionResource\RelationManagers;
+use App\Filament\Resources\DailyTransactionResource\RelationManagers\ChildrenRelationManager;
 
 class DailyTransactionResource extends Resource
 {
@@ -63,7 +65,8 @@ class DailyTransactionResource extends Resource
                                         Header::make('Unit')
                                             ->width('150px'),
                                         Header::make('Price')
-                                            ->width('100px'),
+                                            ->width('100px')
+                                            ->width('90px'),
                                         Header::make('Qty')
                                             ->width('90px'),
                                         Header::make(name: 'Total')
@@ -117,7 +120,7 @@ class DailyTransactionResource extends Resource
                                             ->required()
                                             ->live(onBlur: true)
                                             ->disabled(fn(callable $get) => (float) $get('item_price') <= 0.00)
-                                            ->minValue(1)
+                                            ->minValue(0)
                                             ->afterStateUpdated(function ($state, $get, $set) {
                                                 $stock = Stock::where('id', (int) $get('item_stock'))->first();
                                                 $stockRemaining = $stock->item_qty_remaining;
@@ -147,6 +150,7 @@ class DailyTransactionResource extends Resource
                                             ->sum(); // Sum all rows
                             
                                         $set('sub_total', $total);
+                                        $set('original_sub_total', $total);
                                         $taxes = GovTax::get();
                                         $updatedTaxes = $taxes->map(function ($tax) use ($total) {
                                             return [
@@ -218,8 +222,8 @@ class DailyTransactionResource extends Resource
                                             ];
                                         })->toArray();
                                     })
-                                    ->disableItemCreation()
-                                    ->disableItemDeletion()
+                                    ->addable(false)
+                                    ->deletable(false)
                                     ->required(),
 
                             ]),
@@ -247,8 +251,10 @@ class DailyTransactionResource extends Resource
                                     ->label('Discount(Amount only)')
                                     ->default(0.00)
                                     ->afterStateUpdated(function ($state, callable $set, callable $get) {
-                                        $totalDue = (float) $get('original_amt_due') - (float) $state;
-                                        $set('amount_due', round($totalDue, 2));
+                                        $totalDue = (float) $get('original_sub_total') - (float) $state;
+                                        $set('sub_total', $totalDue);
+                                        $tax = (float) $get('total_taxes');
+                                        $set('amount_due', round($totalDue + $tax, 2));
                                     }),
                                 TextInput::make('customer_amount')
                                     ->numeric()
@@ -285,7 +291,8 @@ class DailyTransactionResource extends Resource
                                     ->default(0.00),
 
                                 Hidden::make('original_amt_due'),
-                                Hidden::make('batch_no')
+                                Hidden::make('batch_no'),
+                                Hidden::make('original_sub_total')
                             ])
                     ]),
 
@@ -314,20 +321,41 @@ class DailyTransactionResource extends Resource
                     ->numeric()
                     ->label('Grand Total')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable(),
             ])->query(DailyTransaction::query()
                 ->select([
                     'batch_no',
                     'transaction_date',
+                    'created_at',
                     DB::raw('COUNT(batch_no) AS item_count'),
                     DB::raw('SUM(item_amount) AS item_amount'),
                     DB::raw('SUM(total_per_item) AS total'),
                     DB::raw('MAX(id) AS id')
                 ])
-                ->whereDate('transaction_date', now())
-                ->groupBy('batch_no', 'transaction_date')
+                ->groupBy('batch_no', 'transaction_date', 'created_at')
                 ->orderBy('id'))
             ->filters([
-                //
+                Filter::make('date_range')
+                    ->label('Select Sales Date Range')
+                    ->form([
+                        DatePicker::make('start_date')
+                            ->label('Start Date')
+                            ->native(false)
+                            ->default(now()->toDateString()),
+                        DatePicker::make('end_date')
+                            ->label('End Date')
+                            ->native(false)
+                            ->default(now()->toDateString()),
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        $query->whereBetween('transaction_date', [
+                            Carbon::parse($data['start_date'])->toDateString(),
+                            Carbon::parse($data['end_date'])->toDateString(),
+                        ])->get();
+
+                    }),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -355,7 +383,12 @@ class DailyTransactionResource extends Resource
                             ->label('Cashier'),
                         TextEntry::make('created_at'),
                         TextEntry::make('batch_no'),
-                        TextEntry::make('total_sales'),
+                        TextEntry::make('total_sales')
+                            ->label('Sales(Total - Discount)')
+                            ->formatStateUsing(function (DailyTransaction $query, $record) {
+                                $totalItems = $query->where('batch_no', $record->batch_no)->sum('total_per_item');
+                                return $totalItems - $record->discount;
+                            }),
                         TextEntry::make('total_tax'),
                         TextEntry::make('amount_tendered')
                             ->label('Customer gave'),

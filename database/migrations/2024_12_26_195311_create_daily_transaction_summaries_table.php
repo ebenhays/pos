@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('daily_transaction_summaries', function (Blueprint $table) {
             $table->id();
             $table->date('transaction_date');
-            $table->unsignedBigInteger('category_id');
+            $table->unsignedBigInteger('stock_id');
             $table->decimal('total_wholesale_sales')->default(0.00);
             $table->decimal('total_retail_sales')->default(0.00);
             $table->decimal('total_wholesale_retail_sales')->storedAs('total_wholesale_sales + total_retail_sales');
@@ -31,11 +31,11 @@ return new class extends Migration {
             $table->decimal('total_sales_in_box')->default(0.00);
             $table->decimal('total_sales_in_kilos')->default(0.00);
             $table->decimal('total_sales_in_box_kilos')->storedAs('total_sales_in_box + total_sales_in_kilos');
-            $table->decimal('total_COS_box')->default(0.00);
-            $table->decimal('total_COS_kilos')->default(0.00);
-            $table->decimal('total_COS_box_kilos')->storedAs('total_COS_box + total_COS_kilos');
-            $table->decimal('total_profit_in_box')->storedAs('total_sales_in_box - total_COS_box');
-            $table->decimal('total_profit_in_kilos')->storedAs('total_sales_in_kilos - total_COS_kilos');
+            $table->decimal('COS_box')->default(0.00);
+            $table->decimal('COS_kilos')->default(0.00);
+            $table->decimal('total_COS_box_kilos')->storedAs('COS_box + COS_kilos');
+            $table->decimal('total_profit_in_box')->storedAs('total_sales_in_box - COS_box');
+            $table->decimal('total_profit_in_kilos')->storedAs('total_sales_in_kilos - COS_kilos');
             $table->decimal('total_profit_box_kilos')->storedAs('total_profit_in_box + total_profit_in_kilos');
             $table->decimal('other_income_box_kilos')->default(0.00);
             $table->decimal('gross_profilt_box_kilos')->storedAs('total_profit_in_box + other_income_box_kilos');
@@ -44,7 +44,7 @@ return new class extends Migration {
 
             $table->timestamps();
 
-            $table->index('category_id', 'category_id_index');
+            $table->index('stock_id', 'stock_id_index');
             $table->index('transaction_date', 'transaction_date_index');
         });
     }
