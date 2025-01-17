@@ -13,4 +13,8 @@ class DailyTransactionSummary extends Model
     {
         return $this->belongsTo(Category::class);
     }
+    public function stock(): BelongsTo
+    {
+        return $this->belongsTo(Stock::class);
+    }
 }
