@@ -60,11 +60,15 @@ class SalesReport extends Report
                                 TextColumn::make('Date'),
                                 TextColumn::make('Item'),
                                 TextColumn::make('Pmt'),
+                                TextColumn::make('Cashier'),
                                 TextColumn::make('Unit'),
                                 TextColumn::make('Price'),
                                 TextColumn::make('Qty'),
-                                TextColumn::make('Total'),
-                                TextColumn::make('Cashier'),
+                                TextColumn::make('Total')
+                                    ->sum()
+                                    ->money('GHS')
+                                    ->alignRight(),
+
                             ]),
 
                     ]),
@@ -128,11 +132,11 @@ class SalesReport extends Report
                 'Date' => $transaction->transaction_date,
                 'Item' => $transaction->stock->item,
                 'Pmt' => $transaction->paymentType->Name,
+                'Cashier' => $transaction->user?->name,
                 'Unit' => $transaction->selling_code,
                 'Price' => $transaction->item_amount,
                 'Qty' => $transaction->qty_sold,
                 'Total' => $transaction->total_per_item,
-                'Cashier' => $transaction->user?->name
             ];
         });
 

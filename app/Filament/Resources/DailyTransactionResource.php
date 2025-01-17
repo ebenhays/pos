@@ -34,6 +34,7 @@ use Awcodes\TableRepeater\Components\TableRepeater;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Infolists\Components\Section as InfoSection;
 use App\Filament\Resources\DailyTransactionResource\Pages;
+use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 use App\Filament\Resources\DailyTransactionResource\RelationManagers;
 use App\Filament\Resources\DailyTransactionResource\RelationManagers\ChildrenRelationManager;
 
@@ -337,25 +338,16 @@ class DailyTransactionResource extends Resource
                 ->groupBy('batch_no', 'transaction_date', 'created_at')
                 ->orderBy('id'))
             ->filters([
-                Filter::make('date_range')
-                    ->label('Select Sales Date Range')
-                    ->form([
-                        DatePicker::make('start_date')
-                            ->label('Start Date')
-                            ->native(false)
-                            ->default(now()->toDateString()),
-                        DatePicker::make('end_date')
-                            ->label('End Date')
-                            ->native(false)
-                            ->default(now()->toDateString()),
-                    ])
-                    ->query(function (Builder $query, array $data) {
-                        $query->whereBetween('transaction_date', [
-                            Carbon::parse($data['start_date'])->toDateString(),
-                            Carbon::parse($data['end_date'])->toDateString(),
-                        ])->get();
-
-                    }),
+                DateRangeFilter::make('transaction_date')
+                    ->defaultToday()
+                    ->modifyQueryUsing(
+                        fn(Builder $query, ?Carbon $startDate, ?Carbon $endDate, $dateString) =>
+                        $query->when(
+                            !empty($dateString),
+                            fn(Builder $query): Builder =>
+                            $query->whereBetween('transaction_date', [$startDate, $endDate])
+                        )
+                    )
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
