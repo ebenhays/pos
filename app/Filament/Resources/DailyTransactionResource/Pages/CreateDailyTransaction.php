@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\DailyTransactionResource\Pages;
 
+use App\Filament\Reports\SalesOnCreditReport;
 use App\Models\CustomerCreditTransactions;
+use App\Models\SalesOnCreditTransactions;
 use Carbon\Carbon;
 use App\Models\Stock;
 use Filament\Actions;
@@ -60,7 +62,7 @@ class CreateDailyTransaction extends CreateRecord
                 $stock->save();
 
                 if ($data["payment_type"] === "4") {
-                    CustomerCreditTransactions::create([
+                    SalesOnCreditTransactions::create([
                         'batch_no' => $batchNo,
                         'customer_id' => $data['customer']
                     ]);
