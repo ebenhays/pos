@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Customer;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -10,9 +11,10 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('payment_types', function (Blueprint $table) {
+        Schema::create('customer_credit_transactions', function (Blueprint $table) {
             $table->id();
-            $table->enum('Name', ['CASH', 'POS', 'MOBILE_MONEY', 'CREDIT']);
+            $table->string('batch_no')->nullable();
+            $table->foreignIdFor(Customer::class);
             $table->timestamps();
         });
     }
@@ -22,6 +24,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('payment_types');
+        Schema::dropIfExists('customer_credit_transactions');
     }
 };

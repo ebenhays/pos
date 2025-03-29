@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\DailyTransactionResource\Pages;
 
-use App\Filament\Resources\DailyTransactionResource;
 use Filament\Actions;
+use Illuminate\Support\Facades\Auth;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\DailyTransactionResource;
 
 class ListDailyTransactions extends ListRecords
 {
@@ -12,8 +13,16 @@ class ListDailyTransactions extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [
-            Actions\CreateAction::make(),
-        ];
+        if (Auth::user()->can('create daily sales')) {
+            return [
+                Actions\CreateAction::make(),
+            ];
+        }
+        return [];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Auth::user()->can('view daily sales');
     }
 }

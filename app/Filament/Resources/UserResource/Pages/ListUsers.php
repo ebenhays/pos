@@ -1,19 +1,19 @@
 <?php
 
-namespace App\Filament\Resources\GovTaxResource\Pages;
+namespace App\Filament\Resources\UserResource\Pages;
 
 use Filament\Actions;
 use Illuminate\Support\Facades\Auth;
+use App\Filament\Resources\UserResource;
 use Filament\Resources\Pages\ListRecords;
-use App\Filament\Resources\GovTaxResource;
 
-class ListGovTaxes extends ListRecords
+class ListUsers extends ListRecords
 {
-    protected static string $resource = GovTaxResource::class;
+    protected static string $resource = UserResource::class;
 
     protected function getHeaderActions(): array
     {
-        if (Auth::user()->can('create tax info')) {
+        if (Auth::user()->can('create users')) {
             return [
                 Actions\CreateAction::make(),
             ];
@@ -23,6 +23,6 @@ class ListGovTaxes extends ListRecords
 
     public static function canViewAny(): bool
     {
-        return Auth::user()->can('view tax info');
+        return Auth::user()->can('view users');
     }
 }

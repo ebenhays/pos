@@ -2,25 +2,25 @@
 
 namespace App\Filament\Reports;
 
+use App\Models\Stock;
 use Carbon\Carbon;
 use Filament\Forms\Form;
 use EightyNine\Reports\Report;
-use App\Models\DailyTransaction;
 use Illuminate\Support\Facades\Auth;
-use EightyNine\Reports\Enums\FontSize;
+use Illuminate\Support\Facades\Gate;
+use App\Models\DailyTransactionSummary;
 use EightyNine\Reports\Components\Body;
 use EightyNine\Reports\Components\Text;
-use EightyNine\Reports\Components\Image;
 use EightyNine\Reports\Components\Footer;
 use EightyNine\Reports\Components\Header;
 use Filament\Forms\Components\DatePicker;
 use EightyNine\Reports\Components\Body\TextColumn;
 
-class SalesReport extends Report
+class StockReport extends Report
 {
     public ?string $heading = "Report";
 
-    public ?string $subHeading = "Daily Sales Report";
+    public ?string $subHeading = "Stock Report";
 
     public function header(Header $header): Header
     {
@@ -33,17 +33,12 @@ class SalesReport extends Report
                     ->schema([
                         Header\Layout\HeaderColumn::make()
                             ->schema([
-                                Text::make("Daily Sales Report")
+                                Text::make("Stock Report")
                                     ->title()
                                     ->primary(),
-                                Text::make("Sales records grouped by batch")
+                                Text::make("Stock listing")
                                     ->subtitle()
                             ])->alignCenter(),
-                        Header\Layout\HeaderColumn::make()
-                            ->schema([
-                                Image::make(''),
-                            ])
-                            ->alignRight(),
                     ]),
             ]);
     }
@@ -63,20 +58,16 @@ class SalesReport extends Report
                                 fn(?array $filters) => $this->getReportData($filters)
                             )
                             ->columns([
-                                TextColumn::make('Batch')
+                                TextColumn::make('Category')
                                     ->groupRows(),
-                                TextColumn::make('Date'),
-                                TextColumn::make('Item'),
-                                TextColumn::make('Pmt'),
-                                TextColumn::make('Cashier'),
-                                TextColumn::make('Unit'),
-                                TextColumn::make('Price'),
-                                TextColumn::make('Qty'),
-                                TextColumn::make('Total')
-                                    ->sum()
-                                    ->money('GHS')
-                                    ->alignRight(),
 
+                                TextColumn::make('Item No'),
+                                TextColumn::make('Item'),
+                                TextColumn::make('Unit'),
+                                TextColumn::make('Qty'),
+                                TextColumn::make('Qty Left'),
+                                TextColumn::make('Cost Price'),
+                                TextColumn::make('Total Stock'),
                             ]),
 
                     ]),
@@ -131,32 +122,30 @@ class SalesReport extends Report
         $startDate = !empty($filters['start_date']) ? Carbon::parse($filters['start_date'])->startOfDay() : today()->startOfDay();
         $endDate = !empty($filters['end_date']) ? Carbon::parse($filters['end_date'])->endOfDay() : today()->endOfDay();
 
-        $query = DailyTransaction::with(['stock', 'paymentType', 'user']);
+        $query = Stock::with('category');
 
-        $query->whereBetween('transaction_date', [$startDate, $endDate])
-            ->orderBy('batch_no', 'asc');
+        $query->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'asc');
 
         // Fetch and transform the data
         $reportData = $query->get()->map(function ($transaction) {
             return [
-                'Batch' => $transaction->batch_no,
-                'Date' => $transaction->transaction_date,
-                'Item' => $transaction->stock->item,
-                'Pmt' => $transaction->paymentType->Name,
-                'Cashier' => $transaction->user?->name,
-                'Unit' => $transaction->selling_code,
-                'Price' => $transaction->item_amount,
-                'Qty' => $transaction->qty_sold,
-                'Total' => $transaction->total_per_item,
+                'Category' => $transaction->category->name,
+                'Item' => $transaction->item,
+                'Item No' => $transaction->item_no,
+                'Unit' => $transaction->item_unit_code,
+                'Qty' => $transaction->opening_stock,
+                'Qty Left' => $transaction->item_qty_remaining,
+                'Cost Price' => $transaction->item_cost_price,
+                'Total Stock' => $transaction->total_stock,
             ];
         });
-
         return $reportData;
     }
 
     public function canViewAny(): bool
     {
-        return Auth::user()->can('view sales report');
+        return Auth::user()->can('view product sales report');
     }
 
 }

@@ -7,6 +7,7 @@ use Filament\Forms;
 use Filament\Tables;
 use App\Models\Stock;
 use App\Models\GovTax;
+use App\Models\Customer;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Enum\StockUnitEnum;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Filament\Tables\Filters\Filter;
 use Filament\Forms\Components\Split;
 use Filament\Support\Enums\MaxWidth;
+use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Select;
 use Filament\Support\Enums\Alignment;
@@ -37,6 +39,7 @@ use App\Filament\Resources\DailyTransactionResource\Pages;
 use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 use App\Filament\Resources\DailyTransactionResource\RelationManagers;
 use App\Filament\Resources\DailyTransactionResource\RelationManagers\ChildrenRelationManager;
+use App\Filament\Resources\DailyTransactionResource\RelationManagers\CustomerCreditTransactionsRelationManager;
 
 class DailyTransactionResource extends Resource
 {
@@ -83,6 +86,7 @@ class DailyTransactionResource extends Resource
                                             ->reactive()
                                             ->searchable()
                                             ->required()
+                                            ->optionsLimit(20)
                                             ->afterStateUpdated(fn($set) => $set('item_unit', null)),
                                         Select::make('item_unit')
                                             ->options(fn() => ProductSellingType::all()->pluck('selling_type', 'selling_code'))
@@ -195,22 +199,19 @@ class DailyTransactionResource extends Resource
                                     ->schema([
                                         TextInput::make('name')
                                             ->label('tax')
-                                            ->required()
                                             ->disabled()
                                             ->dehydrated(),
                                         TextInput::make('percentage')
                                             ->label('percentage')
                                             ->disabled()
                                             ->dehydrated()
-                                            ->numeric()
-                                            ->required(),
+                                            ->numeric(),
                                         TextInput::make('total_tax')
                                             ->label('total')
                                             ->numeric()
                                             ->disabled()
                                             ->reactive()
-                                            ->dehydrated()
-                                            ->required(),
+                                            ->dehydrated(),
                                     ])
                                     ->default(function ($get) {
                                         $taxes = GovTax::get();
@@ -224,8 +225,7 @@ class DailyTransactionResource extends Resource
                                         })->toArray();
                                     })
                                     ->addable(false)
-                                    ->deletable(false)
-                                    ->required(),
+                                    ->deletable(false),
 
                             ]),
 
@@ -235,8 +235,29 @@ class DailyTransactionResource extends Resource
                                 Select::make('payment_type')
                                     ->relationship('paymentType', 'name')
                                     ->required()
+                                    ->reactive()
                                     ->native(false)
-                                    ->columnSpanFull(),
+                                    ->columnSpanFull()
+                                    ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                        //4 is CREDIT
+                                        if ($state === "4") {
+                                            $custAmt = (float) $get('amount_due');
+                                            $set('customer_amount', $custAmt);
+                                            $set('customer', null);
+                                            $set('isCustomerVisible', true);
+                                        } else {
+                                            $set('customer_amount', 0);
+                                            $set('isCustomerVisible', false);
+                                            $set('customer', null);
+                                        }
+                                    }),
+                                Select::make('customer')
+                                    ->options(Customer::query()->pluck('name', 'id'))
+                                    ->optionsLimit(30)
+                                    ->columnSpanFull()
+                                    ->required()
+                                    ->searchable()
+                                    ->visible(fn(callable $get) => $get('isCustomerVisible')),
 
                                 TextInput::make('amount_due')
                                     ->numeric()
@@ -398,7 +419,8 @@ class DailyTransactionResource extends Resource
     public static function getRelations(): array
     {
         return [
-            ChildrenRelationManager::class
+            ChildrenRelationManager::class,
+            CustomerCreditTransactionsRelationManager::class
         ];
     }
 
@@ -409,5 +431,9 @@ class DailyTransactionResource extends Resource
             'create' => Pages\CreateDailyTransaction::route('/create'),
             'view' => Pages\ViewDailyTransaction::route('/{record:batch_no}'),
         ];
+    }
+    public static function canViewAny(): bool
+    {
+        return Auth::user()->can('view daily sales');
     }
 }

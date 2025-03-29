@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class DailyTransaction extends Model
 {
@@ -50,5 +51,10 @@ class DailyTransaction extends Model
     public function getRouteKeyName()
     {
         return 'batch_no';
+    }
+
+    public function salesOnCreditTransactions()
+    {
+        return $this->hasMany(SalesOnCreditTransactions::class, 'batch_no', 'batch_no');
     }
 }

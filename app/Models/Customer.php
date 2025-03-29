@@ -9,4 +9,10 @@ class Customer extends Model
     protected $casts = ['send_sms' => 'boolean'];
 
     protected $fillable = ['name', 'phone_no', 'send_sms', 'country_code'];
+
+    public function creditTransactions()
+    {
+        return $this->hasMany(SalesOnCreditTransactions::class);
+    }
+
 }

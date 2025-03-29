@@ -2,16 +2,19 @@
 
 namespace App\Filament\Resources\DailyTransactionResource\Pages;
 
-use App\Enum\StockUnitEnum;
-use App\Models\DailyTransactionSummary;
-use App\Models\ProductSellingType;
+use App\Models\CustomerCreditTransactions;
 use Carbon\Carbon;
 use App\Models\Stock;
 use Filament\Actions;
+use App\Models\Expense;
+use App\Enum\StockUnitEnum;
 use App\Helpers\CodeGenerator;
 use App\Models\DailyTransaction;
 use App\Models\GovTaxTransaction;
+use App\Models\ProductSellingType;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use App\Models\DailyTransactionSummary;
 use Illuminate\Database\Eloquent\Model;
 use Filament\Resources\Pages\CreateRecord;
 use App\Filament\Resources\DailyTransactionResource;
@@ -34,6 +37,7 @@ class CreateDailyTransaction extends CreateRecord
                 if ($data["customer_amount"] < $data['amount_due']) {
                     throw new BadRequestException('Customer Amount is lesser');
                 }
+
                 $stock = Stock::firstWhere('id', $item["item_stock"]);
                 if ($stock->item_qty_remaining - $item['qty'] < 0) {
                     throw new BadRequestException("{$stock->item} is low in quantity. just left with {$stock->item_qty_remaining}");
@@ -55,6 +59,12 @@ class CreateDailyTransaction extends CreateRecord
                 $stock->item_qty_remaining -= $item['qty'];
                 $stock->save();
 
+                if ($data["payment_type"] === "4") {
+                    CustomerCreditTransactions::create([
+                        'batch_no' => $batchNo,
+                        'customer_id' => $data['customer']
+                    ]);
+                }
 
                 //save daily summaries
                 $totalPrice = (float) $item["item_price"] * (float) $item['qty'];
@@ -74,9 +84,10 @@ class CreateDailyTransaction extends CreateRecord
                     $totalBoxSalesQtySold * $stock->item_cost_price_per_box : 0;
                 $COS_kilos = $item['item_unit'] === StockUnitEnum::KILOS->value ?
                     $totalKilosSalesQtySold * $stock->item_cost_price_per_kg : 0;
+
                 $dailyTransactionSummary =
                     DailyTransactionSummary::where('stock_id', $item["item_stock"])
-                        ->whereDate('transaction_date', now())
+                        ->whereDate('transaction_date', today())
                         ->first();
                 if (!$dailyTransactionSummary) {
                     DailyTransactionSummary::create([
@@ -129,5 +140,10 @@ class CreateDailyTransaction extends CreateRecord
             ->whereDate('transaction_date', now())
             ->sum('qty_sold');
 
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Auth::user()->can('create daily sales');
     }
 }

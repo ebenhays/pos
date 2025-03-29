@@ -2,10 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
 use App\Models\PaymentType;
-use App\Models\ProductSellingType;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\ProductSellingType;
+use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
 
 class DatabaseSeeder extends Seeder
 {
@@ -48,10 +52,35 @@ class DatabaseSeeder extends Seeder
             [
                 'name' => 'MOBILE_MONEY',
             ],
+            [
+                'name' => 'CREDIT',
+            ],
         ];
 
         foreach ($pmtType as $pmt) {
             PaymentType::factory()->create($pmt);
         }
+
+        $user = User::factory()->create([
+            'name' => 'Wizbiz Admin',
+            'email' => 'admin@wizbizgh.com',
+            'password' => Hash::make('F!rstuser'),
+        ]);
+
+        $this->call(RolePermissionSeeder::class);
+        $adminRole = Role::firstOrCreate(['name' => 'super-admin']);
+
+        $permissions = Permission::all();
+
+        $adminRole->syncPermissions($permissions);
+
+        if (!$user->hasRole('super-admin')) {
+            $user->assignRole($adminRole);
+        }
+
+        $role = $user->roles()->first();
+
+        $role->syncPermissions($permissions);
+
     }
 }

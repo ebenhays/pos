@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\CustomerResource\Pages;
 
-use App\Filament\Resources\CustomerResource;
 use Filament\Actions;
+use Illuminate\Support\Facades\Auth;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\CustomerResource;
 
 class ListCustomers extends ListRecords
 {
@@ -12,8 +13,16 @@ class ListCustomers extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [
-            Actions\CreateAction::make(),
-        ];
+        if (Auth::user()->can('create customer')) {
+            return [
+                Actions\CreateAction::make(),
+            ];
+        }
+        return [];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Auth::user()->can('view customer');
     }
 }

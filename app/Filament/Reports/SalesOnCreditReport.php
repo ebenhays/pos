@@ -11,16 +11,18 @@ use EightyNine\Reports\Enums\FontSize;
 use EightyNine\Reports\Components\Body;
 use EightyNine\Reports\Components\Text;
 use EightyNine\Reports\Components\Image;
+use App\Models\SalesOnCreditTransactions;
 use EightyNine\Reports\Components\Footer;
 use EightyNine\Reports\Components\Header;
 use Filament\Forms\Components\DatePicker;
 use EightyNine\Reports\Components\Body\TextColumn;
+use App\Filament\Resources\DailyTransactionResource\Pages\CreateDailyTransaction;
 
-class SalesReport extends Report
+class SalesOnCreditReport extends Report
 {
     public ?string $heading = "Report";
 
-    public ?string $subHeading = "Daily Sales Report";
+    public ?string $subHeading = "Sales on credit Report";
 
     public function header(Header $header): Header
     {
@@ -33,10 +35,10 @@ class SalesReport extends Report
                     ->schema([
                         Header\Layout\HeaderColumn::make()
                             ->schema([
-                                Text::make("Daily Sales Report")
+                                Text::make("Sales on credit Report")
                                     ->title()
                                     ->primary(),
-                                Text::make("Sales records grouped by batch")
+                                Text::make("Customer purchase on credit")
                                     ->subtitle()
                             ])->alignCenter(),
                         Header\Layout\HeaderColumn::make()
@@ -65,17 +67,8 @@ class SalesReport extends Report
                             ->columns([
                                 TextColumn::make('Batch')
                                     ->groupRows(),
+                                TextColumn::make('Customer'),
                                 TextColumn::make('Date'),
-                                TextColumn::make('Item'),
-                                TextColumn::make('Pmt'),
-                                TextColumn::make('Cashier'),
-                                TextColumn::make('Unit'),
-                                TextColumn::make('Price'),
-                                TextColumn::make('Qty'),
-                                TextColumn::make('Total')
-                                    ->sum()
-                                    ->money('GHS')
-                                    ->alignRight(),
 
                             ]),
 
@@ -130,24 +123,16 @@ class SalesReport extends Report
     {
         $startDate = !empty($filters['start_date']) ? Carbon::parse($filters['start_date'])->startOfDay() : today()->startOfDay();
         $endDate = !empty($filters['end_date']) ? Carbon::parse($filters['end_date'])->endOfDay() : today()->endOfDay();
+        $query = SalesOnCreditTransactions::with(['customer']);
 
-        $query = DailyTransaction::with(['stock', 'paymentType', 'user']);
-
-        $query->whereBetween('transaction_date', [$startDate, $endDate])
-            ->orderBy('batch_no', 'asc');
+        $query->whereBetween('created_at', [$startDate, $endDate]);
 
         // Fetch and transform the data
         $reportData = $query->get()->map(function ($transaction) {
             return [
                 'Batch' => $transaction->batch_no,
-                'Date' => $transaction->transaction_date,
-                'Item' => $transaction->stock->item,
-                'Pmt' => $transaction->paymentType->Name,
-                'Cashier' => $transaction->user?->name,
-                'Unit' => $transaction->selling_code,
-                'Price' => $transaction->item_amount,
-                'Qty' => $transaction->qty_sold,
-                'Total' => $transaction->total_per_item,
+                'Customer' => $transaction->customer->name,
+                'Date' => $transaction->created_at,
             ];
         });
 

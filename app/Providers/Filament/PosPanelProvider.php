@@ -30,6 +30,8 @@ class PosPanelProvider extends PanelProvider
             ->login()
             ->brandLogo('/images/pos.jpg')
             ->brandLogoHeight('4rem')
+            ->unsavedChangesAlerts()
+            ->profile()
             ->colors([
                 'primary' => Color::Amber,
             ])

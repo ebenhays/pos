@@ -2,17 +2,18 @@
 
 namespace App\Filament\Resources;
 
-use App\Enum\StockUnitEnum;
-use App\Helpers\CodeGenerator;
-use App\Models\ProductSellingType;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Stock;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use App\Enum\StockUnitEnum;
 use App\Models\ProductUnit;
 use App\Enum\ProductUnitEnum;
+use App\Helpers\CodeGenerator;
 use Filament\Resources\Resource;
+use App\Models\ProductSellingType;
+use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Section;
 use Filament\Tables\Columns\TextColumn;
@@ -50,17 +51,23 @@ class StockResource extends Resource
                             ->relationship('category', 'name')
                             ->required(),
                         Select::make('item_unit_code')
-                            ->options([
-                                'WHL/RTL' => 'WHOLESALE OR RETAIL',
-                                'BX/KG' => 'BOX OR KILOS'
-                            ])
+                            ->options(StockUnitEnum::class)
                             ->label('Item Sold as')
                             ->required()
                             ->reactive()
                             ->afterStateUpdated(function ($state, $set) {
                                 switch ($state) {
-                                    case 'WHL/RTL':
+                                    case 'WHL':
                                         $set('disable_sp_wholesale', false);
+                                        $set('disable_sp_box', true);
+                                        $set('disable_sp_kg', true);
+                                        $set('disable_sp_retail', true);
+                                        $set('disable_cp_kg', true);
+                                        $set('disable_cp_box', true);
+                                        $set('disable_cp_retail_wholesale', false);
+                                        break;
+                                    case 'RTL':
+                                        $set('disable_sp_wholesale', true);
                                         $set('disable_sp_box', true);
                                         $set('disable_sp_kg', true);
                                         $set('disable_sp_retail', false);
@@ -68,14 +75,23 @@ class StockResource extends Resource
                                         $set('disable_cp_box', true);
                                         $set('disable_cp_retail_wholesale', false);
                                         break;
-                                    case 'BX/KG':
+                                    case 'BX':
                                         $set('disable_sp_box', false);
+                                        $set('disable_sp_wholesale', true);
+                                        $set('disable_sp_kg', true);
+                                        $set('disable_cp_retail_wholesale', true);
+                                        $set('disable_sp_retail', true);
+                                        $set('disable_cp_kg', true);
+                                        $set('disable_cp_box', false);
+                                        break;
+                                    case 'KG':
+                                        $set('disable_sp_box', true);
                                         $set('disable_sp_wholesale', true);
                                         $set('disable_sp_kg', false);
                                         $set('disable_cp_retail_wholesale', true);
                                         $set('disable_sp_retail', true);
                                         $set('disable_cp_kg', false);
-                                        $set('disable_cp_box', false);
+                                        $set('disable_cp_box', true);
                                         break;
                                     default:
                                         $set('disable_sp_wholesale', true);
@@ -103,6 +119,13 @@ class StockResource extends Resource
                             ->numeric()
                             ->reactive()
                             ->default(0),
+                        TextInput::make('item_qty_remaining')
+                            ->required()
+                            ->minValue(1)
+                            ->numeric()
+                            ->reactive()
+                            ->default(0)
+                            ->hidden(fn($livewire) => $livewire->record === null),
                         TextInput::make('item_cost_price')
                             ->required()
                             ->disabled(fn($get) => $get('disable_cp_retail_wholesale') || !filled($get('item_unit_code')))
@@ -280,5 +303,10 @@ class StockResource extends Resource
             'create' => Pages\CreateStock::route('/create'),
             'edit' => Pages\EditStock::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Auth::user()->can('view stock');
     }
 }

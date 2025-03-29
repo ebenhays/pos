@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\CustomerResource\Pages;
 
-use App\Filament\Resources\CustomerResource;
 use Filament\Actions;
+use Illuminate\Support\Facades\Auth;
 use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Resources\CustomerResource;
 
 class CreateCustomer extends CreateRecord
 {
@@ -12,5 +13,10 @@ class CreateCustomer extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Auth::user()->can('create customer');
     }
 }

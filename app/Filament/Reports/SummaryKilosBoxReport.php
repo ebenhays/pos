@@ -3,24 +3,25 @@
 namespace App\Filament\Reports;
 
 use Carbon\Carbon;
+use App\Models\Expense;
 use Filament\Forms\Form;
+use App\Enum\StockUnitEnum;
 use EightyNine\Reports\Report;
-use App\Models\DailyTransaction;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use EightyNine\Reports\Enums\FontSize;
+use App\Models\DailyTransactionSummary;
 use EightyNine\Reports\Components\Body;
 use EightyNine\Reports\Components\Text;
-use EightyNine\Reports\Components\Image;
 use EightyNine\Reports\Components\Footer;
 use EightyNine\Reports\Components\Header;
 use Filament\Forms\Components\DatePicker;
 use EightyNine\Reports\Components\Body\TextColumn;
 
-class SalesReport extends Report
+class SummaryKilosBoxReport extends Report
 {
     public ?string $heading = "Report";
 
-    public ?string $subHeading = "Daily Sales Report";
+    public ?string $subHeading = "Summary Kilos And Box Report";
 
     public function header(Header $header): Header
     {
@@ -33,17 +34,12 @@ class SalesReport extends Report
                     ->schema([
                         Header\Layout\HeaderColumn::make()
                             ->schema([
-                                Text::make("Daily Sales Report")
+                                Text::make("Summary Report")
                                     ->title()
                                     ->primary(),
-                                Text::make("Sales records grouped by batch")
+                                Text::make("Sales From Kilos And Box")
                                     ->subtitle()
                             ])->alignCenter(),
-                        Header\Layout\HeaderColumn::make()
-                            ->schema([
-                                Image::make(''),
-                            ])
-                            ->alignRight(),
                     ]),
             ]);
     }
@@ -63,20 +59,18 @@ class SalesReport extends Report
                                 fn(?array $filters) => $this->getReportData($filters)
                             )
                             ->columns([
-                                TextColumn::make('Batch')
+                                TextColumn::make('Date')
                                     ->groupRows(),
-                                TextColumn::make('Date'),
-                                TextColumn::make('Item'),
-                                TextColumn::make('Pmt'),
-                                TextColumn::make('Cashier'),
-                                TextColumn::make('Unit'),
-                                TextColumn::make('Price'),
-                                TextColumn::make('Qty'),
-                                TextColumn::make('Total')
-                                    ->sum()
-                                    ->money('GHS')
-                                    ->alignRight(),
-
+                                TextColumn::make('Sales Box'),
+                                TextColumn::make('Sales Kilos'),
+                                TextColumn::make('COS Box'),
+                                TextColumn::make('COS Kilos'),
+                                TextColumn::make('Profit Box'),
+                                TextColumn::make('Profit Kilos'),
+                                TextColumn::make('Total Profit'),
+                                TextColumn::make('Gross Profit'),
+                                TextColumn::make('Expenses'),
+                                TextColumn::make('Net Profit'),
                             ]),
 
                     ]),
@@ -131,32 +125,50 @@ class SalesReport extends Report
         $startDate = !empty($filters['start_date']) ? Carbon::parse($filters['start_date'])->startOfDay() : today()->startOfDay();
         $endDate = !empty($filters['end_date']) ? Carbon::parse($filters['end_date'])->endOfDay() : today()->endOfDay();
 
-        $query = DailyTransaction::with(['stock', 'paymentType', 'user']);
+        $results = DB::table('daily_transaction_summaries')
+            ->selectRaw('
+            transaction_date,
+            SUM(total_sales_in_box) as total_sales_box,
+            SUM(total_sales_in_kilos) AS total_sales_kg,
+            SUM(COS_box) AS total_cos_box,
+            SUM(COS_kilos) AS total_cos_kilos,
+            SUM(total_profit_in_box) AS total_profit_box,
+            SUM(total_profit_in_kilos) AS total_profit_kilos,
+            SUM(expenses_box_kilos) AS total_expenses_box_kilos,
+            SUM(net_profit_box_kilos) AS total_net_profit_box_kilos,
+            SUM(other_income_box_kilos) AS total_other_income_box_kilos,
+            SUM(gross_profilt_box_kilos)AS total_gross_profilt_box_kilos
+        ')
+            ->whereBetween('transaction_date', [$startDate, $endDate])
+            ->groupBy('transaction_date')
+            ->orderBy('transaction_date')
+            ->get();
 
-        $query->whereBetween('transaction_date', [$startDate, $endDate])
-            ->orderBy('batch_no', 'asc');
-
-        // Fetch and transform the data
-        $reportData = $query->get()->map(function ($transaction) {
+        $totalExpenseBox = Expense::whereBetween('created_at', [$startDate, $endDate])
+            ->where('tied_to', StockUnitEnum::BOX->value)->sum('amount');
+        $totalExpenseKilos = Expense::whereBetween('created_at', [$startDate, $endDate])
+            ->where('tied_to', StockUnitEnum::KILOS->value)->sum('amount');
+        $reportData = $results->map(function ($transaction) use ($totalExpenseBox, $totalExpenseKilos) {
+            $formattedTotal = number_format($totalExpenseBox + $totalExpenseKilos, 2, '.', ',');
             return [
-                'Batch' => $transaction->batch_no,
                 'Date' => $transaction->transaction_date,
-                'Item' => $transaction->stock->item,
-                'Pmt' => $transaction->paymentType->Name,
-                'Cashier' => $transaction->user?->name,
-                'Unit' => $transaction->selling_code,
-                'Price' => $transaction->item_amount,
-                'Qty' => $transaction->qty_sold,
-                'Total' => $transaction->total_per_item,
+                'Sales Box' => $transaction->total_sales_box,
+                'Sales Kilos' => $transaction->total_sales_kg,
+                'COS Box' => $transaction->total_cos_box,
+                'COS Kilos' => $transaction->total_cos_kilos,
+                'Profit Box' => $transaction->total_profit_box,
+                'Profit Kilos' => $transaction->total_profit_kilos,
+                'Total Profit' => $transaction->total_profit_box + $transaction->total_profit_kilos,
+                'Gross Profit' => $transaction->total_gross_profilt_box_kilos,
+                'Expenses' => $formattedTotal,
+                'Net Profit' => $transaction->total_gross_profilt_box_kilos - ($totalExpenseBox + $totalExpenseKilos),
             ];
         });
-
         return $reportData;
     }
 
     public function canViewAny(): bool
     {
-        return Auth::user()->can('view sales report');
+        return Auth::user()->can('view summary(kilos/box) report');
     }
-
 }

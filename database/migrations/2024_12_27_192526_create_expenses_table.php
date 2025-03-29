@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->string('title')->nullable();
             $table->decimal('amount')->default(0.00);
             $table->string('reason');
+            $table->string('tied_to')->nullable();
             $table->timestamps();
         });
     }

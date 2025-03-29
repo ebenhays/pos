@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources\ExpenseResource\Pages;
 
-use App\Filament\Resources\ExpenseResource;
 use Filament\Actions;
+use Illuminate\Support\Facades\Auth;
 use Filament\Resources\Pages\CreateRecord;
+use App\Filament\Resources\ExpenseResource;
 
 class CreateExpense extends CreateRecord
 {
@@ -13,5 +14,10 @@ class CreateExpense extends CreateRecord
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Auth::user()->can('create expense');
     }
 }

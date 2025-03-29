@@ -8,6 +8,7 @@ use App\Models\GovTax;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
+use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Illuminate\Database\Eloquent\Builder;
@@ -87,5 +88,10 @@ class GovTaxResource extends Resource
             'create' => Pages\CreateGovTax::route('/create'),
             'edit' => Pages\EditGovTax::route('/{record}/edit'),
         ];
+    }
+
+    public static function canViewAny(): bool
+    {
+        return Auth::user()->can('view tax info');
     }
 }

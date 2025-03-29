@@ -12,3 +12,4 @@ class ViewDailyTransaction extends ViewRecord
 
 
 }
+

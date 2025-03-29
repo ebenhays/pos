@@ -2,9 +2,11 @@
 
 namespace App\Filament\Reports;
 
-use App\Models\DailyTransactionSummary;
 use Filament\Forms\Form;
 use EightyNine\Reports\Report;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use App\Models\DailyTransactionSummary;
 use EightyNine\Reports\Components\Body;
 use EightyNine\Reports\Components\Text;
 use EightyNine\Reports\Components\Footer;
@@ -20,6 +22,9 @@ class ProductSalesReport extends Report
 
     public function header(Header $header): Header
     {
+        if (!$this->canViewAny()) {
+            return $header->schema([]);
+        }
         return $header
             ->schema([
                 Header\Layout\HeaderRow::make()
@@ -39,6 +44,9 @@ class ProductSalesReport extends Report
 
     public function body(Body $body): Body
     {
+        if (!$this->canViewAny()) {
+            return $body->schema([]);
+        }
         return $body
             ->schema([
                 Body\Layout\BodyColumn::make()
@@ -103,6 +111,9 @@ class ProductSalesReport extends Report
 
     public function filterForm(Form $form): Form
     {
+        if (!$this->canViewAny()) {
+            return $form->schema([]);
+        }
         return $form
             ->schema([
                 DatePicker::make('start_date')
@@ -148,4 +159,10 @@ class ProductSalesReport extends Report
         });
         return $reportData;
     }
+
+    public function canViewAny(): bool
+    {
+        return Auth::user()->can('view product sales report');
+    }
+
 }
