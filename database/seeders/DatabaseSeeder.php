@@ -65,6 +65,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Wizbiz Admin',
             'email' => 'admin@wizbizgh.com',
             'password' => Hash::make('F!rstuser'),
+            'disabled' => false
         ]);
 
         $this->call(RolePermissionSeeder::class);
