@@ -141,7 +141,7 @@ class SalesOnCreditReport extends Report
 
     public function canViewAny(): bool
     {
-        return Auth::user()->can('view sales report');
+        return Auth::user()->can('view sales on credit report');
     }
 
 }

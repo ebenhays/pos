@@ -145,7 +145,7 @@ class StockReport extends Report
 
     public function canViewAny(): bool
     {
-        return Auth::user()->can('view product sales report');
+        return Auth::user()->can('view stock report');
     }
 
 }

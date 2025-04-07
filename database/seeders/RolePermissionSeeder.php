@@ -59,7 +59,8 @@ class RolePermissionSeeder extends Seeder
         Permission::create(['name' => 'view sales report']);
         Permission::create(['name' => 'view summary(kilos/box) report']);
         Permission::create(['name' => 'view summary(wholesale/retail) report']);
-
+        Permission::create(['name' => 'view sales on credit report']);
+        Permission::create(['name' => 'view stock report']);
 
         Permission::create(['name' => 'view users']);
         Permission::create(['name' => 'delete users']);
