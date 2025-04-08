@@ -25,6 +25,7 @@ class User extends Authenticatable
     {
         // Allow access only if the user is not disabled
         //return !$this->disabled;
+        \Log::info('canAccessPanel called for user: ' . $this->id);
         return true;
     }
     protected $fillable = [
