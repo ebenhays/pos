@@ -56,7 +56,7 @@ return [
         'livewire' => env('SENTRY_BREADCRUMBS_LIVEWIRE_ENABLED', true),
 
         // Capture SQL queries as breadcrumbs
-        'sql_queries' => env('SENTRY_BREADCRUMBS_SQL_QUERIES_ENABLED', true),
+        'sql_queries' => env('SENTRY_BREADCRUMBS_SQL_QUERIES_ENABLED', false),
 
         // Capture SQL query bindings (parameters) in SQL query breadcrumbs
         'sql_bindings' => env('SENTRY_BREADCRUMBS_SQL_BINDINGS_ENABLED', false),
