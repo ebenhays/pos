@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class PaymentType extends Model
 {
@@ -13,6 +13,6 @@ class PaymentType extends Model
 
     public function dailyTransaction(): BelongsTo
     {
-        return $this->belongsTo(PaymentType::class);
+        return $this->belongsTo(DailyTransaction::class);
     }
 }

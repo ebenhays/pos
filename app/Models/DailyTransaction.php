@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Models\User;
 use App\Models\Stock;
 use App\Models\PaymentType;
-use App\Models\DailyTransaction;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\SalesOnCreditTransactions;
 use Illuminate\Database\Eloquent\Relations\HasMany;
