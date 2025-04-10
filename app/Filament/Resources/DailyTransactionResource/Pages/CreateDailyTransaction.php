@@ -2,18 +2,12 @@
 
 namespace App\Filament\Resources\DailyTransactionResource\Pages;
 
-use App\Filament\Reports\SalesOnCreditReport;
-use App\Models\CustomerCreditTransactions;
 use App\Models\SalesOnCreditTransactions;
-use Carbon\Carbon;
 use App\Models\Stock;
-use Filament\Actions;
-use App\Models\Expense;
 use App\Enum\StockUnitEnum;
 use App\Helpers\CodeGenerator;
 use App\Models\DailyTransaction;
 use App\Models\GovTaxTransaction;
-use App\Models\ProductSellingType;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\DailyTransactionSummary;

@@ -2,14 +2,9 @@
 
 namespace App\Models;
 
-use App\Models\User;
-use App\Models\Stock;
-use App\Models\PaymentType;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\SalesOnCreditTransactions;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class DailyTransaction extends Model
 {
