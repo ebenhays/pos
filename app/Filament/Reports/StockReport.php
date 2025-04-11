@@ -2,9 +2,10 @@
 
 namespace App\Filament\Reports;
 
-use App\Models\Stock;
 use Carbon\Carbon;
+use App\Models\Stock;
 use Filament\Forms\Form;
+use App\Models\ProductStock;
 use EightyNine\Reports\Report;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -122,7 +123,7 @@ class StockReport extends Report
         $startDate = !empty($filters['start_date']) ? Carbon::parse($filters['start_date'])->startOfDay() : today()->startOfDay();
         $endDate = !empty($filters['end_date']) ? Carbon::parse($filters['end_date'])->endOfDay() : today()->endOfDay();
 
-        $query = Stock::with('category');
+        $query = ProductStock::with('category');
 
         $query->whereBetween('created_at', [$startDate, $endDate])
             ->orderBy('created_at', 'asc');

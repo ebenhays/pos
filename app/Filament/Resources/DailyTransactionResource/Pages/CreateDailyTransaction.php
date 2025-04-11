@@ -2,9 +2,9 @@
 
 namespace App\Filament\Resources\DailyTransactionResource\Pages;
 
-use App\Models\SalesOnCreditTransactions;
 use App\Models\Stock;
 use App\Enum\StockUnitEnum;
+use App\Models\ProductStock;
 use App\Helpers\CodeGenerator;
 use App\Models\DailyTransaction;
 use App\Models\GovTaxTransaction;
@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Models\DailyTransactionSummary;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\SalesOnCreditTransactions;
 use Filament\Resources\Pages\CreateRecord;
 use App\Filament\Resources\DailyTransactionResource;
 use Symfony\Component\HttpFoundation\Exception\BadRequestException;
@@ -34,7 +35,7 @@ class CreateDailyTransaction extends CreateRecord
                     throw new BadRequestException('Customer Amount is lesser');
                 }
 
-                $stock = Stock::firstWhere('id', $item["item_stock"]);
+                $stock = ProductStock::firstWhere('id', $item["item_stock"]);
                 if ($stock->item_qty_remaining - $item['qty'] < 0) {
                     throw new BadRequestException("{$stock->item} is low in quantity. just left with {$stock->item_qty_remaining}");
                 }

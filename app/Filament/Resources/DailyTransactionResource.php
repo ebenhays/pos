@@ -11,6 +11,7 @@ use App\Models\Customer;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Enum\StockUnitEnum;
+use App\Models\ProductStock;
 use Filament\Actions\Action;
 use App\Models\DailyTransaction;
 use Filament\Infolists\Infolist;
@@ -127,7 +128,7 @@ class DailyTransactionResource extends Resource
                                             ->disabled(fn(callable $get) => (float) $get('item_price') <= 0.00)
                                             ->minValue(0)
                                             ->afterStateUpdated(function ($state, $get, $set) {
-                                                $stock = Stock::where('id', (int) $get('item_stock'))->first();
+                                                $stock = ProductStock::where('id', (int) $get('item_stock'))->first();
                                                 $stockRemaining = $stock->item_qty_remaining;
                                                 $qtyRequested = (float) $state;
                                                 if ($stockRemaining < $qtyRequested) {

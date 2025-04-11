@@ -3,9 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class DailyTransactionSummary extends Model
+class ProductStock extends Model
 {
     protected $guarded = ['id'];
 
@@ -13,8 +14,9 @@ class DailyTransactionSummary extends Model
     {
         return $this->belongsTo(Category::class);
     }
-    public function stock(): BelongsTo
+
+    public function productUnit(): HasMany
     {
-        return $this->belongsTo(ProductStock::class);
+        return $this->hasMany(ProductUnit::class, 'item_unit_code', 'prod_unit_code');
     }
 }

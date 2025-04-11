@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Tables\Table;
 use App\Enum\StockUnitEnum;
 use App\Models\ProductUnit;
+use App\Models\ProductStock;
 use App\Enum\ProductUnitEnum;
 use App\Helpers\CodeGenerator;
 use Filament\Resources\Resource;
@@ -26,7 +27,7 @@ use App\Filament\Resources\StockResource\RelationManagers;
 
 class StockResource extends Resource
 {
-    protected static ?string $model = Stock::class;
+    protected static ?string $model = ProductStock::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-presentation-chart-line';
 
