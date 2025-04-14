@@ -98,7 +98,7 @@ class DailyTransactionResource extends Resource
                                             ->afterStateUpdated(function ($state, $set, $get) {
                                                 $set('item_price', 0.00);
                                                 $set('qty', 0.00);
-                                                $stock = Stock::where('id', (int) $get('item_stock'))->first();
+                                                $stock = ProductStock::where('id', (int) $get('item_stock'))->first();
                                                 switch ($state) {
                                                     case StockUnitEnum::WHOLESALE->value:
                                                         $set('item_price', $stock->sp_wholesale ?? 0.00);
